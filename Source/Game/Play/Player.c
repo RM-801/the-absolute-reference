@@ -47,40 +47,42 @@ BlockDefSquare BlockDefs[9 * 4 * 4 * 4] = {
 	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
 	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
 
-	0,0,0,0, 0,0,4,0, 0,0,0,0, 0,0,1,0,
-	1,2,3,4, 0,0,3,0, 4,3,2,1, 0,0,2,0,
-	0,0,0,0, 0,0,2,0, 0,0,0,0, 0,0,3,0,
-	0,0,0,0, 0,0,1,0, 0,0,0,0, 0,0,4,0,
-
-	0,0,0,0, 0,0,4,0, 0,0,0,0, 0,0,1,0,
-	1,2,0,0, 0,2,3,0, 4,3,0,0, 0,3,2,0,
-	0,3,4,0, 0,1,0,0, 0,2,1,0, 0,4,0,0,
+	0,0,0,0, 0,0,4,0, 0,0,0,0, 0,1,0,0,
+	0,0,0,0, 0,0,3,0, 1,2,3,4, 0,2,0,0,
+	4,3,2,1, 0,0,2,0, 0,0,0,0, 0,3,0,0,
+	0,0,0,0, 0,0,1,0, 0,0,0,0, 0,4,0,0,
+	
+	1,2,0,0, 0,0,1,0, 0,0,0,0, 0,4,0,0,
+	0,3,4,0, 0,3,2,0, 4,3,0,0, 2,3,0,0,
+	0,0,0,0, 0,4,0,0, 0,2,1,0, 1,0,0,0,
 	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
 
-	0,0,0,0, 4,0,0,0, 0,0,0,0, 1,0,0,0,
-	0,3,4,0, 3,2,0,0, 0,2,1,0, 2,3,0,0,
-	1,2,0,0, 0,1,0,0, 4,3,0,0, 0,4,0,0,
+	0,3,4,0, 0,1,0,0, 0,0,0,0, 4,0,0,0,
+	1,2,0,0, 0,2,3,0, 0,2,1,0, 3,2,0,0,
+	0,0,0,0, 0,0,4,0, 4,3,0,0, 0,1,0,0,
 	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
 
-	0,0,0,0, 0,3,4,0, 0,0,0,0, 0,1,0,0,
-	1,2,3,0, 0,2,0,0, 4,0,0,0, 0,2,0,0,
-	0,0,4,0, 0,1,0,0, 3,2,1,0, 4,3,0,0,
 	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+	0,0,0,0, 0,2,1,0, 1,0,0,0, 0,4,0,0,
+	4,3,2,0, 0,3,0,0, 2,3,4,0, 0,3,0,0,
+	0,0,1,0, 0,4,0,0, 0,0,0,0, 1,2,0,0,
 
-	0,0,0,0, 0,4,0,0, 0,0,0,0, 1,2,0,0,
-	2,3,4,0, 0,3,0,0, 0,0,1,0, 0,3,0,0,
-	1,0,0,0, 0,2,1,0, 4,3,2,0, 0,4,0,0,
+
 	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+	0,0,0,0, 0,1,0,0, 0,0,4,0, 4,3,0,0,
+	3,2,1,0, 0,2,0,0, 1,2,3,0, 0,2,0,0,
+	4,0,0,0, 0,3,4,0, 0,0,0,0, 0,1,0,0,
+	
 
 	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
 	0,1,2,0, 0,2,4,0, 0,4,3,0, 0,4,1,0,
 	0,3,4,0, 0,1,3,0, 0,2,1,0, 0,3,2,0,
 	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
 
-	0,0,0,0, 0,3,0,0, 0,0,0,0, 0,1,0,0,
-	1,2,3,0, 0,2,4,0, 0,4,0,0, 4,2,0,0,
-	0,4,0,0, 0,1,0,0, 3,2,1,0, 0,3,0,0,
-	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+	0,0,0,0, 0,3,0,0, 0,4,0,0, 0,1,0,0,
+	1,2,3,0, 0,2,4,0, 3,2,1,0, 4,2,0,0,
+	0,4,0,0, 0,1,0,0, 0,0,0,0, 0,3,0,0
 };
 
 const uint16_t NextSectionLevels[10] = {100u, 200u, 300u, 400u, 500u, 600u, 700u, 800u, 900u, 999u};
@@ -1454,90 +1456,153 @@ static bool Blocked(Player* player, int16_t col, int16_t row, Rotation rotation)
 // make this function update the player's active block rotation too, rather
 // than requiring it be updated after calling this.
 bool RotationBlockedCheckKick(Player* player, int16_t col, int16_t row, Rotation rotation) {
-	if (player->activeBlock & BLOCK_BIG) {
-		col -= 2;
-		for (int16_t defRow = 0; defRow < 8; defRow++) {
-			if ((row + 1) - defRow < player->matrixHeight) {
-				for (int16_t defCol = 0; defCol < 8; defCol++) {
-					if (
-						col + defCol >= 0 &&
-						col + defCol <= (int8_t)player->matrixWidth - 1 &&
-						DEFBLOCKBIG(player->activeBlock & BLOCK_TYPE, rotation, defRow, defCol) != DEFBLOCK_EMPTY &&
-						(MATRIX(player, (row + 1) - defRow, col + defCol).block & ~BLOCK_INVISIBLE) != NULLBLOCK) {
-						// The active block is blocked in the current
-						// position/rotation.
+	// SRS Wall Kick Data
+	// SRS uses different kick tables for I and other pieces
+	// Each entry: {x, y} offset
+	// SRS J, L, S, T, Z Tetromino Wall Kick Data
+	static const int srs_kick_table_normal[8][5][2] = {
+		/* 0->R */ { {0,0}, {-1,0}, {-1,1}, {0,-2}, {-1,-2} },
+		/* R->0 */ { {0,0}, {1,0}, {1,-1}, {0,2}, {1,2} },
+		/* R->2 */ { {0,0}, {1,0}, {1,-1}, {0,2}, {1,2} },
+		/* 2->R */ { {0,0}, {-1,0}, {-1,1}, {0,-2}, {-1,-2} },
+		/* 2->L */ { {0,0}, {1,0}, {1,1}, {0,-2}, {1,-2} },
+		/* L->2 */ { {0,0}, {-1,0}, {-1,-1}, {0,2}, {-1,2} },
+		/* L->0 */ { {0,0}, {-1,0}, {-1,-1}, {0,2}, {-1,2} },
+		/* 0->L */ { {0,0}, {1,0}, {1,1}, {0,-2}, {1,-2} }
+	};
+	// SRS I Tetromino Wall Kick Data
+	static const int srs_kick_table_I[8][5][2] = {
+		/* 0->R */ { {0,0}, {-2,0}, {1,0}, {-2,-1}, {1,2} },
+		/* R->0 */ { {0,0}, {2,0}, {-1,0}, {2,1}, {-1,-2} },
+		/* R->2 */ { {0,0}, {-1,0}, {2,0}, {-1,2}, {2,-1} },
+		/* 2->R */ { {0,0}, {1,0}, {-2,0}, {1,-2}, {-2,1} },
+		/* 2->L */ { {0,0}, {2,0}, {-1,0}, {2,1}, {-1,-2} },
+		/* L->2 */ { {0,0}, {-2,0}, {1,0}, {-2,-1}, {1,2} },
+		/* L->0 */ { {0,0}, {1,0}, {-2,0}, {1,-2}, {-2,1} },
+		/* 0->L */ { {0,0}, {-1,0}, {2,0}, {-1,2}, {2,-1} }
+	};
+	
 
-						// I blocks never kick.
-						if ((player->activeBlock & BLOCK_TYPE) == BLOCKTYPE_I) {
-							return true;
-						}
-
-						// Reject rotations blocked in the middle column of 3x3 blocks.
-						if (defCol == 2 || defCol == 3) {
-							return true;
-						} 
-
-						// Kick right by default.
-						for (int16_t kick = 1; kick < 2; kick++) {
-							if (!Blocked(player, col + kick * 2 + 2, row, rotation)) {
-								player->activePos[0].integer += kick * 2;
-								return false;
+	// Determine rotation index (from, to)
+	int from = player->activeRotation;
+	int to = rotation;
+	if ((player->activeBlock & BLOCK_TYPE) == BLOCKTYPE_I) {
+		int rot_index = -1;
+		if (from == ROTATION_UP && to == ROTATION_RIGHT) rot_index = 0; // 0->R
+		else if (from == ROTATION_RIGHT && to == ROTATION_UP) rot_index = 1; // R->0
+		else if (from == ROTATION_RIGHT && to == ROTATION_DOWN) rot_index = 2; // R->2
+		else if (from == ROTATION_DOWN && to == ROTATION_RIGHT) rot_index = 3; // 2->R
+		else if (from == ROTATION_DOWN && to == ROTATION_LEFT) rot_index = 4; // 2->L
+		else if (from == ROTATION_LEFT && to == ROTATION_DOWN) rot_index = 5; // L->2
+		else if (from == ROTATION_LEFT && to == ROTATION_UP) rot_index = 6; // L->0
+		else if (from == ROTATION_UP && to == ROTATION_LEFT) rot_index = 7; // 0->L
+		if (rot_index == -1) return true;
+		for (int i = 0; i < 5; ++i) {
+			int dx = srs_kick_table_I[rot_index][i][0];
+			int dy = srs_kick_table_I[rot_index][i][1];
+			int test_col = col + dx;
+			int test_row = row + dy;
+			bool blocked = false;
+			if (player->activeBlock & BLOCK_BIG) {
+				test_col -= 2;
+				for (int16_t defRow = 0; defRow < 8; defRow++) {
+					if ((test_row + 1) - defRow < player->matrixHeight) {
+						for (int16_t defCol = 0; defCol < 8; defCol++) {
+							if (
+								test_col + defCol >= 0 &&
+								test_col + defCol <= (int8_t)player->matrixWidth - 1 &&
+								DEFBLOCKBIG(player->activeBlock & BLOCK_TYPE, rotation, defRow, defCol) != DEFBLOCK_EMPTY &&
+								(MATRIX(player, (test_row + 1) - defRow, test_col + defCol).block & ~BLOCK_INVISIBLE) != NULLBLOCK) {
+								blocked = true;
+								break;
 							}
 						}
-						// Failing that, kick left.
-						for (int16_t kick = 1; kick < 2; kick++) {
-							if (!Blocked(player, col - kick * 2 + 2, row, rotation)) {
-								player->activePos[0].integer -= kick * 2;
-								return false;
+						if (blocked) break;
+					}
+				}
+			} else {
+				for (int16_t defRow = 0; defRow < 4; defRow++) {
+					if (test_row - defRow < player->matrixHeight) {
+						for (int16_t defCol = 0; defCol < 4; defCol++) {
+							if (
+								test_col + defCol >= 0 &&
+								test_col + defCol <= player->matrixWidth - 1 &&
+								DEFBLOCK(player->activeBlock & BLOCK_TYPE, rotation, defRow, defCol) != DEFBLOCK_EMPTY &&
+								(MATRIX(player, test_row - defRow, test_col + defCol).block & ~BLOCK_INVISIBLE) != NULLBLOCK) {
+								blocked = true;
+								break;
 							}
 						}
-						return true;
+						if (blocked) break;
 					}
 				}
 			}
+			if (!blocked) {
+				player->activePos[0].integer += dx;
+				player->activePos[1].integer += dy;
+				return false;
+			}
 		}
-	}
-	else {
-		for (int16_t defRow = 0; defRow < 4; defRow++) {
-			if (row - defRow < player->matrixHeight) {
-				for (int16_t defCol = 0; defCol < 4; defCol++) {
-					if (
-						col + defCol >= 0 &&
-						col + defCol <= player->matrixWidth - 1 &&
-						DEFBLOCK(player->activeBlock & BLOCK_TYPE, rotation, defRow, defCol) != DEFBLOCK_EMPTY &&
-						(MATRIX(player, row - defRow, col + defCol).block & ~BLOCK_INVISIBLE) != NULLBLOCK) {
-						// The active block is blocked in the current
-						// position/rotation.
-
-						// I blocks never kick.
-						if ((player->activeBlock & BLOCK_TYPE) == BLOCKTYPE_I) {
-							return true;
+		return true;
+	} else {
+		int rot_index = -1;
+		if (from == ROTATION_UP && to == ROTATION_RIGHT) rot_index = 0; // 0->R
+		else if (from == ROTATION_RIGHT && to == ROTATION_UP) rot_index = 1; // R->0
+		else if (from == ROTATION_RIGHT && to == ROTATION_DOWN) rot_index = 2; // R->2
+		else if (from == ROTATION_DOWN && to == ROTATION_RIGHT) rot_index = 3; // 2->R
+		else if (from == ROTATION_DOWN && to == ROTATION_LEFT) rot_index = 4; // 2->L
+		else if (from == ROTATION_LEFT && to == ROTATION_DOWN) rot_index = 5; // L->2
+		else if (from == ROTATION_LEFT && to == ROTATION_UP) rot_index = 6; // L->0
+		else if (from == ROTATION_UP && to == ROTATION_LEFT) rot_index = 7; // 0->L
+		if (rot_index == -1) return true;
+		for (int i = 0; i < 5; ++i) {
+			int dx = srs_kick_table_normal[rot_index][i][0];
+			int dy = srs_kick_table_normal[rot_index][i][1];
+			int test_col = col + dx;
+			int test_row = row + dy;
+			bool blocked = false;
+			if (player->activeBlock & BLOCK_BIG) {
+				test_col -= 2;
+				for (int16_t defRow = 0; defRow < 8; defRow++) {
+					if ((test_row + 1) - defRow < player->matrixHeight) {
+						for (int16_t defCol = 0; defCol < 8; defCol++) {
+							if (
+								test_col + defCol >= 0 &&
+								test_col + defCol <= (int8_t)player->matrixWidth - 1 &&
+								DEFBLOCKBIG(player->activeBlock & BLOCK_TYPE, rotation, defRow, defCol) != DEFBLOCK_EMPTY &&
+								(MATRIX(player, (test_row + 1) - defRow, test_col + defCol).block & ~BLOCK_INVISIBLE) != NULLBLOCK) {
+								blocked = true;
+								break;
+							}
 						}
-
-						// Reject rotations blocked in the middle column of 3x3 blocks.
-						if (defCol == 1) {
-							return true;
+						if (blocked) break;
+					}
+				}
+			} else {
+				for (int16_t defRow = 0; defRow < 4; defRow++) {
+					if (test_row - defRow < player->matrixHeight) {
+						for (int16_t defCol = 0; defCol < 4; defCol++) {
+							if (
+								test_col + defCol >= 0 &&
+								test_col + defCol <= player->matrixWidth - 1 &&
+								DEFBLOCK(player->activeBlock & BLOCK_TYPE, rotation, defRow, defCol) != DEFBLOCK_EMPTY &&
+								(MATRIX(player, test_row - defRow, test_col + defCol).block & ~BLOCK_INVISIBLE) != NULLBLOCK) {
+								blocked = true;
+								break;
+							}
 						}
-
-						// Kick right by default.
-						if (!Blocked(player, col + 1, row, rotation)) {
-							player->activePos[0].integer++;
-							return false;
-						}
-						// Failing that, kick left.
-						else if (!Blocked(player, col - 1, row, rotation)) {
-							player->activePos[0].integer--;
-							return false;
-						}
-						else {
-							return true;
-						}
+						if (blocked) break;
 					}
 				}
 			}
+			if (!blocked) {
+				player->activePos[0].integer += dx;
+				player->activePos[1].integer += dy;
+				return false;
+			}
 		}
+		return true;
 	}
-	return false;
 }
 
 void CheckShiftActiveBlock(Player* player) {
@@ -2441,7 +2506,7 @@ void UpdatePlayNext(Player* player) {
 	}
 
 	// Entry position.
-	player->activeRotation = ROTATION_DOWN;
+	player->activeRotation = ROTATION_ENTRY;
 	Fixed32 activeCol;
 	if (GameFlags & GAME_DOUBLES) {
 		if (player->num == PLAYER1) {

@@ -201,7 +201,7 @@ typedef enum Rotation {
 	ROTATION_RIGHT,
 	ROTATION_UP,
 	ROTATION_LEFT,
-	ROTATION_ENTRY = ROTATION_DOWN
+	ROTATION_ENTRY = ROTATION_UP // SRS
 } Rotation;
 #define ROTATE_LEFT(r) (((r) + 1) % 4)
 #define ROTATE_RIGHT(r) (((r) + 3) % 4)
