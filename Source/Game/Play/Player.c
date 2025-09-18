@@ -1712,7 +1712,7 @@ void LandActiveBlock(Player* player, Fixed32 gravityStep) {
 			}
 
 			player->activePos[1].fraction = 0xFFFFu;
-			if ((GameButtonsDown[player->num] & BUTTON_ALLDIRECTIONS) == BUTTON_DOWN) {
+			if ((GameButtonsDown[player->num] & BUTTON_ALLDIRECTIONS) == BUTTON_UP) {
 				if (player->modeFlags & MODE_TADEATH) {
 					if (player->level >= 0u) {
 						if (ManualLockUnprotected[player->num]) {
