@@ -8,9 +8,16 @@ bool OpenPaths(const char* const argv0) {
 		return false;
 	}
 
-	if (!PHYSFS_setSaneConfig("nightmareci", "taref", "ZIP", 0, 0)) {
-		fprintf(stderr, "Error setting sane PhysicsFS config: %s\n", PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode()));
+	const char* baseDir = PHYSFS_getBaseDir();
+	if (!PHYSFS_mount(baseDir, NULL, 1)) {
+		fprintf(stderr, "Error mounting base dir: %s\n", PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode()));
 		return false;
+	}
+
+	char romsPath[1024];
+	snprintf(romsPath, sizeof(romsPath), "%sroms", baseDir);
+	if (!PHYSFS_mount(romsPath, "roms", 1)) {
+		fprintf(stderr, "Error mounting roms dir: %s\n", PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode()));
 	}
 
 	printf("Search path directories:\n");
