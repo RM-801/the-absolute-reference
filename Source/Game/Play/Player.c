@@ -143,6 +143,7 @@ void UpdateSiren(Player* player);
 ButtonInput Select(Player* player);
 Fixed32 CurrentGravity(Player* player);
 uint32_t PointsBaseValue(Player* player, uint8_t numLines);
+void ResetLockDelay(Player* player, const ResetType resetType);
 
 static MatrixBlock MatrixBlocks[NUMMATRIXBLOCKS_SHARED];
 
@@ -281,6 +282,9 @@ void InitPlayer(PlayerNum playerNum) {
 	player->activeBlockItemType = ITEMTYPE_NULL;
 	player->nextBlockItemType = ITEMTYPE_NULL;
 	ItemDescriptions[playerNum] = ITEMTYPE_NULL;
+	player->moveResetTimes = 0u;
+	player->rotationResetTimes = 0u;
+	player->landingFlag = false;
 
 	// Player GRS data.
 	player->section = 0u;
@@ -1203,6 +1207,9 @@ void NextPlayLock(Player* player) {
 	ManualLockUnprotected[player->num] = false;
 	player->nowFlags &= ~NOW_SHOWTLSBLOCK;
 	player->nowFlags |= NOW_LOCKING;
+	player->moveResetTimes = 0u;
+	player->rotationResetTimes = 0u;
+	player->landingFlag = false;
 }
 
 void NextPlayClear(Player* player) {
@@ -1688,6 +1695,11 @@ void CheckShiftActiveBlock(Player* player) {
 		}
 	}
 
+	if (player->activePos[0].integer != shiftCol) {
+		if (Blocked(player, player->activePos[0].integer, player->activePos[1].integer - 1, player->activeRotation)) {
+			ResetLockDelay(player, RESETTYPE_MOVE);
+		}
+	}
 	player->activePos[0].integer = shiftCol;
 }
 
@@ -1732,6 +1744,14 @@ void LandActiveBlock(Player* player, Fixed32 gravityStep) {
 					player->lockFrames = 0;
 				}
 			}
+		}
+
+		// In TGM3 World rule, a tetromino can only rotated 8 times after its initial landing.
+		player->landingFlag = true;
+
+		if (player->moveResetTimes >= MAX_MOVE_RESET_TIMES
+			|| player->rotationResetTimes >= MAX_ROTATION_RESET_TIMES) {
+			player->lockFrames = 0;
 		}
 	}
 
@@ -1826,6 +1846,7 @@ void UpdatePlayActive(Player* player) {
 
 	if (
 			(ROTATED_LEFT(GameButtonsNew[player->num]) || (player->itemMiscFlags & ITEMMISC_ROTATE)) &&
+			(player->rotationResetTimes < MAX_ROTATION_RESET_TIMES) &&
 			!RotationBlockedCheckKick(player, player->activePos[0].integer, player->activePos[1].integer, ROTATE_LEFT(player->activeRotation))) {
 		if (player->activeBlock & BLOCK_TRANSFORM) {
 			Block oldActiveBlock = player->activeBlock;
@@ -1844,9 +1865,10 @@ void UpdatePlayActive(Player* player) {
 			player->activeRotation = ROTATE_LEFT(player->activeRotation);
 		}
 		player->numActiveRotations++;
+		ResetLockDelay(player, RESETTYPE_ROTATION);
 	}
 	if (
-			ROTATED_RIGHT(GameButtonsNew[player->num]) &&
+			ROTATED_RIGHT(GameButtonsNew[player->num]) && (player->rotationResetTimes < MAX_ROTATION_RESET_TIMES) &&
 			!RotationBlockedCheckKick(player, player->activePos[0].integer, player->activePos[1].integer, ROTATE_RIGHT(player->activeRotation))) {
 		if (player->activeBlock & BLOCK_TRANSFORM) {
 			Block oldActiveBlock = player->activeBlock;
@@ -1865,6 +1887,7 @@ void UpdatePlayActive(Player* player) {
 			player->activeRotation = ROTATE_RIGHT(player->activeRotation);
 		}
 		player->numActiveRotations++;
+		ResetLockDelay(player, RESETTYPE_ROTATION);
 	}
 	if (player->itemMiscFlags & ITEMMISC_ROTATE) {
 		player->itemMiscFlags &= ~ITEMMISC_ROTATE;
@@ -3465,4 +3488,17 @@ void CheckDisableItemDescription(Player* player) {
 
 	ItemDescriptions[player->num] = ITEMTYPE_NULL;
 	player->numTgmPlusBlocks++;
+}
+
+void ResetLockDelay(Player* player, const ResetType resetType) {
+	if (resetType == RESETTYPE_MOVE) {
+		if (++(player->moveResetTimes) < MAX_MOVE_RESET_TIMES) {
+			player->lockFrames = player->lockDelay;
+		}
+	}
+	else {
+		if (player->landingFlag && (++(player->rotationResetTimes) < MAX_ROTATION_RESET_TIMES)) {
+			player->lockFrames = player->lockDelay;
+		}
+	}
 }
