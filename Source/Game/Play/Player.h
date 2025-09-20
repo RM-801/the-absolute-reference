@@ -299,7 +299,7 @@ struct Player {
 	char rankingCode[NUMRANKINGCODEDIGITS];
 	uint8_t moveResetTimes;
 	uint8_t rotationResetTimes;
-	bool landingFlag; // A tetromino can only rotated 8 times after its initial landing.
+	bool landingFlag;
 };
 
 extern bool Demo;
