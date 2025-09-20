@@ -297,6 +297,9 @@ struct Player {
 	uint8_t gradeBeforeMGrade;
 	bool passedMGradeCheckpoint;
 	char rankingCode[NUMRANKINGCODEDIGITS];
+	uint8_t moveResetTimes;
+	uint8_t rotationResetTimes;
+	bool landingFlag; // A tetromino can only rotated 8 times after its initial landing.
 };
 
 extern bool Demo;
@@ -418,3 +421,11 @@ void LockActiveBlock(Player *player, LockType lockType);
 void InitModeCodes(Player* player);
 
 #define RANDOMIZER_USEHISTORY true
+
+typedef enum ResetType {
+	RESETTYPE_MOVE,
+	RESETTYPE_ROTATION
+} ResetType;
+
+#define MAX_MOVE_RESET_TIMES 10
+#define MAX_ROTATION_RESET_TIMES 8
