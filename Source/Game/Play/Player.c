@@ -101,6 +101,9 @@ Player Players[NUMPLAYERS];
 static uint8_t NumFastDropRows[NUMPLAYERS];
 static uint8_t NumInstantDropRows[NUMPLAYERS];
 
+extern uint8_t DiagonalUpperwardMask;
+extern uint8_t DiagonalDownwardMask;
+
 // Flag that controls manual lock protection. Used in high speed 20G contexts,
 // such as T.A. death; in those contexts, it's used to protect against manual
 // locking of a sequence of blocks, where manual locking is only enabled if
@@ -1724,7 +1727,7 @@ void LandActiveBlock(Player* player, Fixed32 gravityStep) {
 			}
 
 			player->activePos[1].fraction = 0xFFFFu;
-			if ((GameButtonsDown[player->num] & BUTTON_ALLDIRECTIONS) == BUTTON_UP) {
+			if ((GameButtonsDown[player->num] & DiagonalUpperwardMask) == BUTTON_UP) {
 				if (player->modeFlags & MODE_TADEATH) {
 					if (player->level >= 0u) {
 						if (ManualLockUnprotected[player->num]) {
@@ -1898,13 +1901,13 @@ void UpdatePlayActive(Player* player) {
 	Fixed32 gravity = CurrentGravity(player);
 	player->gravity = gravity;
 
-	if ((GameButtonsDown[player->num] & BUTTON_ALLDIRECTIONS) == BUTTON_DOWN) {
+	if ((GameButtonsDown[player->num] & DiagonalDownwardMask) == BUTTON_DOWN) {
 		if (gravity.integer < 1u) {
 			gravity = F32(1, 0x0000);
 		}
 		NumFastDropRows[player->num]++;
 	}
-	else if ((GameButtonsDown[player->num] & BUTTON_ALLDIRECTIONS) == BUTTON_UP) {
+	else if ((GameButtonsDown[player->num] & DiagonalUpperwardMask) == BUTTON_UP) {
 		gravity = F32(20, 0x0000);
 		int16_t droppedRows = player->activePos[1].integer - StepGravity(player, gravity).integer;
 		if (droppedRows < 0) {
