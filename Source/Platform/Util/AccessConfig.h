@@ -49,3 +49,6 @@ typedef enum SpeakersSetting {
 	SPEAKERS_BOTH  = SPEAKERS_LEFT | SPEAKERS_RIGHT
 } SpeakersSetting;
 extern SpeakersSetting AudioSpeakers;
+
+extern uint8_t DiagonalUpperwardMask;
+extern uint8_t DiagonalDownwardMask;
