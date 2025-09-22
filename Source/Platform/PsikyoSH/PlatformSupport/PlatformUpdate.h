@@ -12,7 +12,7 @@
 #include "Video/SpriteInit.h"
 #include "Video/UnknownSprite.h"
 #include "Video/Pal.h"
-#include "Main/Main.h"
+#include "Main/MainLoop.h"
 #include "Main/Frame.h"
 #include "Sound/Sound.h"
 #include "Input/Input.h"

@@ -1,4 +1,4 @@
-#include "PlatformUpdate.h"
+#include "PlatformSupport/PlatformUpdate.h"
 #include "Platform/Util/AccessConfig.h"
 #include "Platform/Util/AccessData.h"
 #include "Platform/SDL2/AccessAudio.h"
@@ -6,6 +6,8 @@
 #include "Platform/Util/Render/Render.h"
 #include "Main/Frame.h"
 #include "Input/Button.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 Uint64 PlatformCurrentTime;
 Uint64 PlatformTimeAccumulator;

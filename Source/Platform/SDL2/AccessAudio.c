@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "Platform/SDL2/AccessAudio.h"
 #include "Platform/Util/AccessData.h"
 #include "Platform/Util/AccessConfig.h"

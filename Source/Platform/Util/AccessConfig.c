@@ -8,6 +8,7 @@
 #include "physfs.h"
 #include <assert.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 KeySetting InputConfigKeyboard[NUMINPUTS][8];
 
@@ -68,6 +69,9 @@ int VsyncUpdateRate = 0;
 bool AudioMuted = false;
 MixingSetting AudioMixing = MIXING_MONO;
 SpeakersSetting AudioSpeakers = SPEAKERS_BOTH;
+
+uint8_t DiagonalUpperwardMask = BUTTON_ALLDIRECTIONS;
+uint8_t DiagonalDownwardMask = BUTTON_ALLDIRECTIONS;
 
 const char* const DefaultConfig =
 "[INPUT_BUTTONS1P_KEYBOARD]\n"
@@ -825,6 +829,28 @@ bool OpenConfig() {
 			}
 			else if (StringCompareNoCase(speakersSetting, "Right") == 0) {
 				AudioSpeakers = SPEAKERS_RIGHT;
+			}
+		}
+	}
+
+	{
+		int diagonalUpperwardInputSetting;
+		if (ini_sget(config, "GAME_SETTING", "DIAGONAL_UPPERWARD_INPUT", "%d", &diagonalUpperwardInputSetting) == 1) {
+			if (diagonalUpperwardInputSetting) {
+				DiagonalUpperwardMask = BUTTON_VIRTICALDIRECTIONS;
+			}
+			else {
+				DiagonalUpperwardMask = BUTTON_ALLDIRECTIONS;
+			}
+		}
+
+		int diagonalDownwardInputSetting;
+		if (ini_sget(config, "GAME_SETTING", "DIAGONAL_DOWNWARD_INPUT", "%d", &diagonalDownwardInputSetting) == 1) {
+			if (diagonalDownwardInputSetting) {
+				DiagonalDownwardMask = BUTTON_VIRTICALDIRECTIONS;
+			}
+			else {
+				DiagonalDownwardMask = BUTTON_ALLDIRECTIONS;
 			}
 		}
 	}

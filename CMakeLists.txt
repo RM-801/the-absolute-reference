@@ -225,4 +225,6 @@ set(GAME_HEADERS
 	"${SRC}/Platform/${PLATFORM_NAME}/PlatformSupport/PlatformUpdate.h"
 )
 
+include_directories(${PHYSFS_INCLUDE_DIR})
+
 add_subdirectory("${SRC}/Platform/${PLATFORM_NAME}")

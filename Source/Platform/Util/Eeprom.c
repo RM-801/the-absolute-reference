@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "Eeprom/Eeprom.h"
 #include "Eeprom/Setting.h"
 #include "Game/Save.h"

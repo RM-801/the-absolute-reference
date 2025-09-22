@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "Platform/SDL2/AccessDisplay.h"
 #include "Platform/Util/AccessConfig.h"
 #include "Platform/Util/AccessData.h"
