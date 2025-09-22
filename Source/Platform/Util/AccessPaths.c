@@ -20,6 +20,12 @@ bool OpenPaths(const char* const argv0) {
 		fprintf(stderr, "Error mounting roms dir: %s\n", PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode()));
 	}
 
+	if (!PHYSFS_setWriteDir(baseDir)) {
+		fprintf(stderr, "Error setting write dir: %s\n", PHYSFS_getErrorByCode(PHYSFS_getLastErrorCode()));
+		return false;
+	}
+	printf("Write directory set to: %s\n", baseDir);
+
 	printf("Search path directories:\n");
 	for (char** searchPath = PHYSFS_getSearchPath(); searchPath != NULL && *searchPath != NULL; searchPath++) {
 		printf("%s\n", *searchPath);
