@@ -3661,9 +3661,9 @@ void CheckDisableItemDescription(Player* player) {
 }
 
 void ResetLockDelay(Player* player, const ResetType resetType) {
-#define FUNC(rs, var, unused)											\
+#define FUNC(rs, var, stepReset)										\
 	case CTRL_METHOD_##rs##_##var:										\
-		if (!memcmp(#rs, "ARS", sizeof(#rs))) return;					\
+		if (stepReset) return;											\
 		break;
 	switch (ControlMethod) {
 		FOREACH_CONTROL_METHOD(FUNC)
