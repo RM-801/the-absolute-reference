@@ -52,3 +52,47 @@ extern SpeakersSetting AudioSpeakers;
 
 extern uint8_t DiagonalUpperwardMask;
 extern uint8_t DiagonalDownwardMask;
+
+// List of control methods, some codes are automatically generated
+// based on the contents of this macro.
+//
+// method(rotationSystem, variant, stepReset)
+//  -  "rotationSystem" is related to the color, initial direction, and
+//     drop method of tetrominos.
+//  -  "stepReset" is related to how tetrominos reset lock delay, step
+//     reset or move, rotation reset.
+//
+// Config options are also automatically generated.
+// The program will call function RotationBlockedCheckKick_$(rotation)_$(variant)
+// (e.g. RotationBlockedCheckKick_ARS_TA)
+// to check if a rotation is possible, it still needs to write this function manually.
+#define FOREACH_CONTROL_METHOD(method) \
+	method(ARS, TA, 1) method(SRS, TI, 0)
+
+#define DEFAULT_CONTROL_METHOD CTRL_METHOD_ARS_TA
+
+#define FUNC(rs, var, unused)							\
+	CTRL_METHOD_##rs##_##var,
+
+typedef enum ControlMethods {
+	FOREACH_CONTROL_METHOD(FUNC)
+} ControlMethods;
+
+#undef FUNC
+extern ControlMethods ControlMethod;
+
+// TODO: Support more randomizers.
+#define FOREACH_RANDOMIZER(randomizer) \
+	randomizer(4H6R)
+
+#define DEFAULT_RANDOMIZER RANDOMIZER_4H6R
+
+#define FUNC(name) \
+	RANDOMIZER_##name,
+
+typedef enum Randomizers {
+	FOREACH_RANDOMIZER(FUNC)
+} Randomizers;
+
+#undef FUNC
+extern Randomizers Randomizer;

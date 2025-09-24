@@ -59,13 +59,13 @@ static bool Init(int argc, char** argv) {
 		return false;
 	}
 
-	if (!OpenEeprom()) {
-		fprintf(stderr, "Failed opening EEP-ROM save data\n");
+	if (!OpenConfig()) {
+		fprintf(stderr, "Failed opening configuration\n");
 		return false;
 	}
 
-	if (!OpenConfig()) {
-		fprintf(stderr, "Failed opening configuration\n");
+	if (!OpenEeprom()) {
+		fprintf(stderr, "Failed opening EEP-ROM save data\n");
 		return false;
 	}
 
@@ -147,6 +147,33 @@ static bool Init(int argc, char** argv) {
 
 	SDL_UnlockMutex(AudioMutex);
 	printf("Finished game init.\n\n");
+
+#define FUNC(rs, var, unused)											\
+	case CTRL_METHOD_##rs##_##var:										\
+		if (!memcmp(#rs, "SRS", sizeof(#rs))) {						\
+			PALTABLE_ZBLOCK = PALPTR(0x168); /* red */					\
+			PALTABLE_SBLOCK = PALPTR(0x172); /* green */				\
+			PALTABLE_TBLOCK = PALPTR(0x17C); /* purple */				\
+			PALTABLE_JBLOCK = PALPTR(0x186); /* blue */				\
+			PALTABLE_LBLOCK = PALPTR(0x190); /* orange */				\
+			PALTABLE_OBLOCK = PALPTR(0x19A); /* yellow */				\
+			PALTABLE_IBLOCK = PALPTR(0x1A4); /* cyan */				\
+		}																\
+		if (!memcmp(#rs, "ARS", sizeof(#rs))) {						\
+			PALTABLE_ZBLOCK = PALPTR(0x172); /* green */				\
+			PALTABLE_SBLOCK = PALPTR(0x17C); /* purple */				\
+			PALTABLE_TBLOCK = PALPTR(0x1A4); /* cyan */				\
+			PALTABLE_JBLOCK = PALPTR(0x186); /* blue */				\
+			PALTABLE_LBLOCK = PALPTR(0x190); /* orange */				\
+			PALTABLE_OBLOCK = PALPTR(0x19A); /* yellow */				\
+			PALTABLE_IBLOCK = PALPTR(0x168); /* red */					\
+		}																\
+		break;
+
+	switch (ControlMethod) {
+		FOREACH_CONTROL_METHOD(FUNC)
+	}
+#undef FUNC
 
 	// TODO: Return init success status, such as returning false if ROMs have
 	// the wrong checksum.
