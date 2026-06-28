@@ -46,13 +46,15 @@ extern ROMDATA PalTableData PalTable;
 // TODO
 
 #define PALTABLE_GARBAGEBLOCK PALPTR(0x15E)
-#define PALTABLE_ZBLOCK PALPTR(0x168)//red
-#define PALTABLE_SBLOCK PALPTR(0x172)//green
-#define PALTABLE_TBLOCK PALPTR(0x17C)//purple
-#define PALTABLE_JBLOCK PALPTR(0x186)//blue
-#define PALTABLE_LBLOCK PALPTR(0x190)//orange
-#define PALTABLE_OBLOCK PALPTR(0x19A)//yellow
-#define PALTABLE_IBLOCK PALPTR(0x1A4)//cyan
+
+extern const Color* PALTABLE_ZBLOCK;
+extern const Color* PALTABLE_SBLOCK;
+extern const Color* PALTABLE_TBLOCK;
+extern const Color* PALTABLE_JBLOCK;
+extern const Color* PALTABLE_LBLOCK;
+extern const Color* PALTABLE_OBLOCK;
+extern const Color* PALTABLE_IBLOCK;
+
 #define PALTABLE_PALNUM128BLOCK PALPTR(0x1AE)
 
 // TODO

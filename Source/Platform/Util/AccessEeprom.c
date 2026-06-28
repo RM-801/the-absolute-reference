@@ -1,15 +1,40 @@
 #include "Platform/Util/AccessEeprom.h"
+#include "Platform/Util/AccessConfig.h"
 #include "Platform/Util/EepromData.h"
+#include "Game/Screen.h"
 #include "physfs.h"
 #include <stdio.h>
 #include <stdlib.h>
 
 static const char* const DefaultEepromFilename = "roms/tgm2p/tgm2p.default.nv";
 #define EEPROM_DIR "nvram/tgm2p/"
-static const char* const EepromFilename = EEPROM_DIR "eeprom";
+char EepromFilename[64] = EEPROM_DIR "eeprom";
 
 bool OpenEeprom() {
 	PHYSFS_Stat eepromStat;
+
+#define FUNC(rs, var, unused)											\
+	case CTRL_METHOD_##rs##_##var:										\
+		strcpy(EepromFilename, EEPROM_DIR "eeprom_" #rs "_" #var);		\
+		break;
+
+	switch (ControlMethod) {
+		FOREACH_CONTROL_METHOD(FUNC)
+	}
+
+#undef FUNC
+
+#define FUNC(randomizer)						 \
+	case RANDOMIZER_##randomizer:				 \
+		strcat(EepromFilename, "_" #randomizer); \
+		break;
+
+	switch (Randomizer) {
+		FOREACH_RANDOMIZER(FUNC)
+	}
+
+#undef FUNC
+
 	if (!PHYSFS_stat(EepromFilename, &eepromStat)) {
 		if (!PHYSFS_stat(DefaultEepromFilename, &eepromStat)) {
 			fprintf(stderr, "Failed to find the default \"%s\" EEP-ROM save data in the \"tgm2p\" ROM set\n\n", DefaultEepromFilename);
@@ -53,6 +78,7 @@ bool OpenEeprom() {
 		printf("Opened EEP-ROM save data \"%s\".\n\n", EepromFilename);
 	}
 
+	SaveSettings();
 	printf("Finished reading EEP-ROM save data.\n\n");
 
 	return true;

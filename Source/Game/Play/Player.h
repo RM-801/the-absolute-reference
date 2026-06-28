@@ -201,13 +201,14 @@ typedef enum Rotation {
 	ROTATION_RIGHT,
 	ROTATION_UP,
 	ROTATION_LEFT,
-	ROTATION_ENTRY = ROTATION_UP // SRS
 } Rotation;
 #define ROTATE_LEFT(r) (((r) + 1) % 4)
 #define ROTATE_RIGHT(r) (((r) + 3) % 4)
 #define ROTATED_ANY(buttons) ((buttons) & (BUTTON_1 | BUTTON_2 | BUTTON_3))
 #define ROTATED_LEFT(buttons) ((buttons) & (BUTTON_1 | BUTTON_3))
 #define ROTATED_RIGHT(buttons) ((buttons) & BUTTON_2)
+
+extern Rotation ROTATION_ENTRY;
 
 #define MATRIX(player, row, col) ((player)->matrix[(row) * (player)->matrixWidth + (col)])
 
@@ -387,7 +388,7 @@ void ShowPlayers();
 // The first two block definitions, for empty and wall block types, are unused,
 // and only present so BLOCKTYPE_* constants can be used with BLOCKDEF.
 typedef const uint8_t BlockDefSquare;
-extern BlockDefSquare BlockDefs[9 * 4 * 4 * 4];
+extern BlockDefSquare* BlockDefs;
 #define BLOCKDEF(type) (&BlockDefs[(type) * 4 * 4 * 4])
 #define BLOCKDEFROW(def, rotation, row) (&((def)[(rotation) * 4 + (row) * 4 * 4]))
 #define BLOCKDEFROWBIG(def, rotation, row) (&(def)[(rotation) * 4 + ((row) / 2) * 4 * 4])

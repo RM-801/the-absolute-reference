@@ -33,6 +33,14 @@ static GameMusic CurrentGameMusic = GAMEMUSIC_0;
 GameMusic NextGameMusic = GAMEMUSIC_0;
 static uint8_t UNK_607929A = 0u; // TODO: FSM state. In range [0, 2].
 
+const Color* PALTABLE_ZBLOCK = NULL;
+const Color* PALTABLE_SBLOCK = NULL;
+const Color* PALTABLE_TBLOCK = NULL;
+const Color* PALTABLE_JBLOCK = NULL;
+const Color* PALTABLE_LBLOCK = NULL;
+const Color* PALTABLE_OBLOCK = NULL;
+const Color* PALTABLE_IBLOCK = NULL;
+
 typedef enum GameLoopState {
 	GAMELOOP_RESTART = 0,
 	GAMELOOP_STOP = 2,
@@ -47,7 +55,7 @@ static GameLoopState StartGameLoop();
 void InitGame() {
 	UNK_602AA4C();
 	UNK_6029814(0u, 0u, 0u, 0xFFu);
-	
+
 	if (UNK_6064750 != NULL) {
 		UNK_6024030(UNK_6064750);
 	}
@@ -174,7 +182,7 @@ void CheckSetNewChallenger(Player* player) {
 
 GameLoopState GameStartVersus() {
 	ModeFlag modeFlags;
-	
+
 	if ((Players[PLAYER1].nowFlags & NOW_WAITING) && (Players[PLAYER2].nowFlags & NOW_WAITING)) {
 		if (GameFlags & GAME_CHALLENGEDELAY) {
 			NextGameMusic = 2u;

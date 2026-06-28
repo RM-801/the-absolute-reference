@@ -70,7 +70,10 @@ MixingSetting AudioMixing = MIXING_MONO;
 SpeakersSetting AudioSpeakers = SPEAKERS_BOTH;
 
 uint8_t DiagonalUpperwardMask = BUTTON_ALLDIRECTIONS;
-uint8_t DiagonalDownwardMask = BUTTON_ALLDIRECTIONS;
+uint8_t DiagonalDownwardMask  = BUTTON_ALLDIRECTIONS;
+
+ControlMethods ControlMethod = DEFAULT_CONTROL_METHOD;
+Randomizers Randomizer = DEFAULT_RANDOMIZER;
 
 const char* const DefaultConfig =
 "[INPUT_BUTTONS1P_KEYBOARD]\n"
@@ -665,17 +668,13 @@ bool OpenConfig() {
 	}
 
 	{
-		bool updateSave = false;
-
 		const char* const screenSetting = ini_get(config, "GAME_SETTING", "SCREEN");
 		if (screenSetting) {
 			if (!StringCompareNoCase(screenSetting, "Normal")) {
 				Settings[SETTING_SCREENMODE] = SCREENMODE_NORMAL;
-				updateSave = true;
 			}
 			if (!StringCompareNoCase(screenSetting, "Reverse")) {
 				Settings[SETTING_SCREENMODE] = SCREENMODE_REVERSE;
-				updateSave = true;
 			}
 		}
 
@@ -684,15 +683,12 @@ bool OpenConfig() {
 			switch (versusRoundSetting) {
 			case 1:
 				Settings[SETTING_NUMVERSUSROUNDS] = 0u;
-				updateSave = true;
 				break;
 			case 3:
 				Settings[SETTING_NUMVERSUSROUNDS] = 1u;
-				updateSave = true;
 				break;
 			case 5:
 				Settings[SETTING_NUMVERSUSROUNDS] = 2u;
-				updateSave = true;
 				break;
 			default:
 				break;
@@ -712,11 +708,9 @@ bool OpenConfig() {
 			case 800:
 			case 900:
 				Settings[SETTING_MAXVERSUSSECTION] = (versusLevelSetting / 100) - 1;
-				updateSave = true;
 				break;
 			case 999:
 				Settings[SETTING_MAXVERSUSSECTION] = 9u;
-				updateSave = true;
 				break;
 			default:
 				break;
@@ -726,18 +720,15 @@ bool OpenConfig() {
 		int demoSoundSetting;
 		if (ini_sget(config, "GAME_SETTING", "DEMO_SOUND", "%d", &demoSoundSetting) == 1) {
 			Settings[SETTING_DEMOSOUND] = !!demoSoundSetting;
-			updateSave = true;
 		}
 
 		const char* const coinSlotSetting = ini_get(config, "GAME_SETTING", "COIN_SLOT");
 		if (coinSlotSetting) {
 			if (!StringCompareNoCase(coinSlotSetting, "Same")) {
 				Settings[SETTING_COINSLOT] = COINSLOT_SAME;
-				updateSave = true;
 			}
 			else if (!StringCompareNoCase(coinSlotSetting, "Individual")) {
 				Settings[SETTING_COINSLOT] = COINSLOT_INDIVIDUAL;
-				updateSave = true;
 			}
 		}
 
@@ -745,15 +736,12 @@ bool OpenConfig() {
 		if (coinModeSetting) {
 			if (!StringCompareNoCase(coinModeSetting, "Normal")) {
 				Settings[SETTING_COINMODE] = COINMODE_NORMAL;
-				updateSave = true;
 			}
 			else if (!StringCompareNoCase(coinModeSetting, "Double")) {
 				Settings[SETTING_COINMODE] = COINMODE_DOUBLE;
-				updateSave = true;
 			}
 			else if (!StringCompareNoCase(coinModeSetting, "Free Play")) {
 				Settings[SETTING_COINMODE] = COINMODE_FREEPLAY;
-				updateSave = true;
 			}
 		}
 
@@ -779,11 +767,9 @@ bool OpenConfig() {
 					) {
 					if (credits == 1 && coins >= 1 && coins <= 6) {
 						Settings[SETTING_PRICE1P + i] = coins - 1;
-						updateSave = true;
 					}
 					else if (credits >= 2 && credits <= 4 && coins == 1) {
 						Settings[SETTING_PRICE1P + i] = credits + 4;
-						updateSave = true;
 					}
 				}
 				for (size_t j = 0u; j < lengthof(fields); j++) {
@@ -795,10 +781,6 @@ bool OpenConfig() {
 		int debugSetting;
 		if (Settings[SETTING_COINMODE] == COINMODE_FREEPLAY && ini_sget(config, "GAME_SETTING", "DEBUG", "%d", &debugSetting) == 1) {
 			Debug = !!debugSetting;
-		}
-
-		if (updateSave) {
-			SaveSettings();
 		}
 	}
 
@@ -852,6 +834,34 @@ bool OpenConfig() {
 				DiagonalDownwardMask = BUTTON_ALLDIRECTIONS;
 			}
 		}
+	}
+
+	{
+#define FUNC(rs, var, unused)													\
+		else if (StringCompareNoCase(controlMethod, #rs "_" #var) == 0) {	\
+				ControlMethod = CTRL_METHOD_##rs##_##var;					\
+		}
+
+		const char* controlMethod;
+		if ((controlMethod = ini_get(config, "GAME_SETTING", "CONTROL_METHOD"))) {
+			if (0) {}
+			FOREACH_CONTROL_METHOD(FUNC)
+		}
+#undef FUNC
+	}
+
+	{
+#define FUNC(rd) \
+		else if (StringCompareNoCase(randomizer, #rd) == 0) { \
+			Randomizer = RANDOMIZER_##rd;					  \
+		}
+
+		const char* randomizer;
+		if ((randomizer = ini_get(config, "GAME_SETTING", "RANDOMIZER"))) {
+			if (0) {}
+			FOREACH_RANDOMIZER(FUNC)
+		}
+#undef FUNC
 	}
 
 	ini_free(config);

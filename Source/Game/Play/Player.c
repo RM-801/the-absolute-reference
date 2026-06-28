@@ -24,6 +24,7 @@
 #include "Game/Temp.h"
 #include "Input/Input.h"
 #include "Input/Button.h"
+#include "Platform/Util/AccessConfig.h"
 #include "Video/Video.h"
 #include "Video/Pal.h"
 #include "Video/Object.h"
@@ -35,8 +36,10 @@
 #include "Lib/Fixed.h"
 #include "Lib/Macros.h"
 #include "PlatformTypes.h"
+#include <complex.h>
 
-BlockDefSquare BlockDefs[9 * 4 * 4 * 4] = {
+BlockDefSquare* BlockDefs = NULL;
+BlockDefSquare BlockDefs_SRS[9 * 4 * 4 * 4] = {
 	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
 	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
 	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
@@ -51,7 +54,7 @@ BlockDefSquare BlockDefs[9 * 4 * 4 * 4] = {
 	0,0,0,0, 0,0,3,0, 1,2,3,4, 0,2,0,0,
 	4,3,2,1, 0,0,2,0, 0,0,0,0, 0,3,0,0,
 	0,0,0,0, 0,0,1,0, 0,0,0,0, 0,4,0,0,
-	
+
 	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
 	0,0,0,0, 0,0,1,0, 4,3,0,0, 0,4,0,0,
 	1,2,0,0, 0,3,2,0, 0,2,1,0, 2,3,0,0,
@@ -72,7 +75,7 @@ BlockDefSquare BlockDefs[9 * 4 * 4 * 4] = {
 	0,0,0,0, 0,1,0,0, 0,0,4,0, 4,3,0,0,
 	3,2,1,0, 0,2,0,0, 1,2,3,0, 0,2,0,0,
 	4,0,0,0, 0,3,4,0, 0,0,0,0, 0,1,0,0,
-	
+
 
 	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
 	0,1,2,0, 0,2,4,0, 0,4,3,0, 0,4,1,0,
@@ -83,6 +86,53 @@ BlockDefSquare BlockDefs[9 * 4 * 4 * 4] = {
 	0,0,0,0, 0,3,0,0, 0,4,0,0, 0,1,0,0,
 	1,2,3,0, 0,2,4,0, 3,2,1,0, 4,2,0,0,
 	0,4,0,0, 0,1,0,0, 0,0,0,0, 0,3,0,0
+};
+
+BlockDefSquare BlockDefs_ARS[9 * 4 * 4 * 4] = {
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+
+	0,0,0,0, 0,0,4,0, 0,0,0,0, 0,0,1,0,
+	1,2,3,4, 0,0,3,0, 4,3,2,1, 0,0,2,0,
+	0,0,0,0, 0,0,2,0, 0,0,0,0, 0,0,3,0,
+	0,0,0,0, 0,0,1,0, 0,0,0,0, 0,0,4,0,
+
+	0,0,0,0, 0,0,4,0, 0,0,0,0, 0,0,1,0,
+	1,2,0,0, 0,2,3,0, 4,3,0,0, 0,3,2,0,
+	0,3,4,0, 0,1,0,0, 0,2,1,0, 0,4,0,0,
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+
+	0,0,0,0, 4,0,0,0, 0,0,0,0, 1,0,0,0,
+	0,3,4,0, 3,2,0,0, 0,2,1,0, 2,3,0,0,
+	1,2,0,0, 0,1,0,0, 4,3,0,0, 0,4,0,0,
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+
+	0,0,0,0, 0,3,4,0, 0,0,0,0, 0,1,0,0,
+	1,2,3,0, 0,2,0,0, 4,0,0,0, 0,2,0,0,
+	0,0,4,0, 0,1,0,0, 3,2,1,0, 4,3,0,0,
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+
+	0,0,0,0, 0,4,0,0, 0,0,0,0, 1,2,0,0,
+	2,3,4,0, 0,3,0,0, 0,0,1,0, 0,3,0,0,
+	1,0,0,0, 0,2,1,0, 4,3,2,0, 0,4,0,0,
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+	0,1,2,0, 0,2,4,0, 0,4,3,0, 0,4,1,0,
+	0,3,4,0, 0,1,3,0, 0,2,1,0, 0,3,2,0,
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+
+	0,0,0,0, 0,3,0,0, 0,0,0,0, 0,1,0,0,
+	1,2,3,0, 0,2,4,0, 0,4,0,0, 4,2,0,0,
+	0,4,0,0, 0,1,0,0, 3,2,1,0, 0,3,0,0,
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
 };
 
 const uint16_t NextSectionLevels[10] = {100u, 200u, 300u, 400u, 500u, 600u, 700u, 800u, 900u, 999u};
@@ -101,8 +151,12 @@ Player Players[NUMPLAYERS];
 static uint8_t NumFastDropRows[NUMPLAYERS];
 static uint8_t NumInstantDropRows[NUMPLAYERS];
 
-extern uint8_t DiagonalUpperwardMask;
-extern uint8_t DiagonalDownwardMask;
+Rotation ROTATION_ENTRY = ROTATION_DOWN;
+ButtonInput lockButton;
+
+bool RotationBlockedCheckKick_SRS_TI(Player* player, int16_t col, int16_t row, Rotation rotation);
+bool RotationBlockedCheckKick_ARS_TA(Player* player, int16_t col, int16_t row, Rotation rotation);
+bool (*RotationBlockedCheckKick)(Player*, int16_t, int16_t, Rotation);
 
 // Flag that controls manual lock protection. Used in high speed 20G contexts,
 // such as T.A. death; in those contexts, it's used to protect against manual
@@ -258,6 +312,33 @@ void InitPlayer(PlayerNum playerNum) {
 
 	// Gameplay state.
 	player->play = (PlayData) { .flags = PLAYFLAG_NONE, .state = PLAYSTATE_START };
+
+#define FUNC(rs, var, stepReset)											\
+	case CTRL_METHOD_##rs##_##var:											\
+		RotationBlockedCheckKick = RotationBlockedCheckKick_##rs##_##var;	\
+		BlockDefs = BlockDefs_##rs;										\
+		if (!memcmp(#rs, "SRS", sizeof(#rs))) {							\
+			ROTATION_ENTRY = ROTATION_UP;									\
+			lockButton	   = BUTTON_UP;									\
+		}																	\
+		if (!memcmp(#rs, "ARS", sizeof(#rs))) {							\
+			ROTATION_ENTRY = ROTATION_DOWN;								\
+			lockButton	   = BUTTON_DOWN;									\
+		}																	\
+		break;
+
+	if (Demo) {
+		ROTATION_ENTRY			 = ROTATION_DOWN;
+		lockButton				 = BUTTON_DOWN;
+		RotationBlockedCheckKick = RotationBlockedCheckKick_ARS_TA;
+		BlockDefs = BlockDefs_ARS;
+	}
+	else {
+		switch (ControlMethod) {
+			FOREACH_CONTROL_METHOD(FUNC)
+		}
+	}
+#undef FUNC
 
 	// Active block.
 	player->activeBlock = (Block)BLOCKTYPE_I;
@@ -888,7 +969,7 @@ void UpdatePlayerSelecting(Player* player) {
 			player->nowFlags = NOW_PLAYING | NOW_STARTED;
 			StartPlayer(player);
 			NextPlayStart(player);
-			
+
 			CurrentGameBg.UNK_10 |= player->num == PLAYER1 ? 2u : 4u;
 		}
 	}
@@ -1465,7 +1546,94 @@ static bool Blocked(Player* player, int16_t col, int16_t row, Rotation rotation)
 // use F32I(player->activePos[]) for matrix square checking instead. And maybe
 // make this function update the player's active block rotation too, rather
 // than requiring it be updated after calling this.
-bool RotationBlockedCheckKick(Player* player, int16_t col, int16_t row, Rotation rotation) {
+bool RotationBlockedCheckKick_ARS_TA(Player* player, int16_t col, int16_t row, Rotation rotation) {
+	if (player->activeBlock & BLOCK_BIG) {
+		col -= 2;
+		for (int16_t defRow = 0; defRow < 8; defRow++) {
+			if ((row + 1) - defRow < player->matrixHeight) {
+				for (int16_t defCol = 0; defCol < 8; defCol++) {
+					if (
+						col + defCol >= 0 &&
+						col + defCol <= (int8_t)player->matrixWidth - 1 &&
+						DEFBLOCKBIG(player->activeBlock & BLOCK_TYPE, rotation, defRow, defCol) != DEFBLOCK_EMPTY &&
+						(MATRIX(player, (row + 1) - defRow, col + defCol).block & ~BLOCK_INVISIBLE) != NULLBLOCK) {
+						// The active block is blocked in the current
+						// position/rotation.
+
+						// I blocks never kick.
+						if ((player->activeBlock & BLOCK_TYPE) == BLOCKTYPE_I) {
+							return true;
+						}
+
+						// Reject rotations blocked in the middle column of 3x3 blocks.
+						if (defCol == 2 || defCol == 3) {
+							return true;
+						} 
+
+						// Kick right by default.
+						for (int16_t kick = 1; kick < 2; kick++) {
+							if (!Blocked(player, col + kick * 2 + 2, row, rotation)) {
+								player->activePos[0].integer += kick * 2;
+								return false;
+							}
+						}
+						// Failing that, kick left.
+						for (int16_t kick = 1; kick < 2; kick++) {
+							if (!Blocked(player, col - kick * 2 + 2, row, rotation)) {
+								player->activePos[0].integer -= kick * 2;
+								return false;
+							}
+						}
+						return true;
+					}
+				}
+			}
+		}
+	}
+	else {
+		for (int16_t defRow = 0; defRow < 4; defRow++) {
+			if (row - defRow < player->matrixHeight) {
+				for (int16_t defCol = 0; defCol < 4; defCol++) {
+					if (
+						col + defCol >= 0 &&
+						col + defCol <= player->matrixWidth - 1 &&
+						DEFBLOCK(player->activeBlock & BLOCK_TYPE, rotation, defRow, defCol) != DEFBLOCK_EMPTY &&
+						(MATRIX(player, row - defRow, col + defCol).block & ~BLOCK_INVISIBLE) != NULLBLOCK) {
+						// The active block is blocked in the current
+						// position/rotation.
+
+						// I blocks never kick.
+						if ((player->activeBlock & BLOCK_TYPE) == BLOCKTYPE_I) {
+							return true;
+						}
+
+						// Reject rotations blocked in the middle column of 3x3 blocks.
+						if (defCol == 1) {
+							return true;
+						}
+
+						// Kick right by default.
+						if (!Blocked(player, col + 1, row, rotation)) {
+							player->activePos[0].integer++;
+							return false;
+						}
+						// Failing that, kick left.
+						else if (!Blocked(player, col - 1, row, rotation)) {
+							player->activePos[0].integer--;
+							return false;
+						}
+						else {
+							return true;
+						}
+					}
+				}
+			}
+		}
+	}
+	return false;
+}
+
+bool RotationBlockedCheckKick_SRS_TI(Player* player, int16_t col, int16_t row, Rotation rotation) {
 	// SRS Wall Kick Data
 	// SRS uses different kick tables for I and other pieces
 	// Each entry: {x, y} offset
@@ -1491,7 +1659,6 @@ bool RotationBlockedCheckKick(Player* player, int16_t col, int16_t row, Rotation
 		/* L->0 */ { {0,0}, {-2,0}, {1,0}, {-2,1}, {1,-2} },
 		/* 0->L */ { {0,0}, {2,0}, {-1,0}, {-1,2}, {2,-1} }
 	};
-	
 
 	// Determine rotation index (from, to)
 	int from = player->activeRotation;
@@ -1714,7 +1881,7 @@ void LandActiveBlock(Player* player, Fixed32 gravityStep) {
 		}
 		player->activePos[1] = landingRow;
 	}
- 
+
 	TEMPPTR(EntryData, entry);
 	if (Blocked(player, player->activePos[0].integer, player->activePos[1].integer - 1, player->activeRotation)) {
 		if (!(player->modeFlags & MODE_DOUBLES) || entry->numMatrixBlockings != 0) {
@@ -1727,7 +1894,7 @@ void LandActiveBlock(Player* player, Fixed32 gravityStep) {
 			}
 
 			player->activePos[1].fraction = 0xFFFFu;
-			if ((GameButtonsDown[player->num] & DiagonalUpperwardMask) == BUTTON_UP) {
+			if ((GameButtonsDown[player->num] & DiagonalUpperwardMask) == lockButton) {
 				if (player->modeFlags & MODE_TADEATH) {
 					if (player->level >= 0u) {
 						if (ManualLockUnprotected[player->num]) {
@@ -3494,6 +3661,15 @@ void CheckDisableItemDescription(Player* player) {
 }
 
 void ResetLockDelay(Player* player, const ResetType resetType) {
+#define FUNC(rs, var, stepReset)										\
+	case CTRL_METHOD_##rs##_##var:										\
+		if (stepReset) return;											\
+		break;
+	switch (ControlMethod) {
+		FOREACH_CONTROL_METHOD(FUNC)
+	}
+#undef FUNC
+
 	if (resetType == RESETTYPE_MOVE) {
 		if (++(player->moveResetTimes) < MAX_MOVE_RESET_TIMES) {
 			player->lockFrames = player->lockDelay;
