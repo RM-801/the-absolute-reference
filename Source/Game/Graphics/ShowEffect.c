@@ -58,7 +58,7 @@ void ShowFieldBlockExplosion(Player* player, int16_t row, int16_t col) {
 		}
 		else {
 			assert(blockNum < lengthof(PalNumTableNormalBlocks));
-			data->palNum = PalNumTableNormalBlocks[blockNum];
+			data->palNum = BlockPalNum(player, blockNum);
 		}
 	}
 }
@@ -187,7 +187,7 @@ void UNK_60173B4(Player* player, int16_t row, int16_t col) {
 			*objectTable = ObjectTablesBlockExplosions[Rand(8u) % 8];
 			const uint8_t blockNum = TOBLOCKNUM(player->activeBlock & BLOCK_TYPE);
 			assert(blockNum < lengthof(PalNumTableNormalBlocks));
-			data->palNum = PalNumTableNormalBlocks[blockNum];
+			data->palNum = BlockPalNum(player, blockNum);
 		}
 	}
 }
@@ -239,7 +239,7 @@ void ShowLineClear(Player* player, int16_t row) {
 					data->objectTables[col - 1] = ObjectTablesBlockExplosions[explosionSeed % 8];
 					const uint8_t blockNum = TOBLOCKNUM(MATRIX(player, row, col).block & BLOCK_TYPE);
 					assert(blockNum < lengthof(PalNumTableNormalBlocks));
-					data->palNums[col - 1] = PalNumTableNormalBlocks[blockNum];
+					data->palNums[col - 1] = BlockPalNum(player, blockNum);
 				}
 				else {
 					data->objectTables[col - 1] = NULL;
@@ -250,7 +250,7 @@ void ShowLineClear(Player* player, int16_t row) {
 					data->objectTables[col - 1] = ObjectTablesBlockExplosions[explosionSeed % 8];
 					const uint8_t blockNum = TOBLOCKNUM(MATRIX(player, row, col).block & BLOCK_TYPE);
 					assert(blockNum < lengthof(PalNumTableNormalBlocks));
-					data->palNums[col - 1] = PalNumTableNormalBlocks[blockNum];
+					data->palNums[col - 1] = BlockPalNum(player, blockNum);
 				}
 				else {
 					data->objectTables[col - 1] = NULL;
@@ -294,7 +294,7 @@ void ShowStaffClear(Player* player, int16_t row) {
 				}
 				else {
 					assert(TOBLOCKNUM(blockType) < lengthof(PalNumTableNormalBlocks));
-					data->palNums[col - 1] = PalNumTableNormalBlocks[TOBLOCKNUM(blockType)];
+					data->palNums[col - 1] = BlockPalNum(player, TOBLOCKNUM(blockType));
 				}
 			}
 			else {
@@ -445,12 +445,12 @@ static void DisplayThrownOutActiveBlock(Player* player, int16_t x, int16_t y, in
 		startPalNum = 128u;
 	}
 	else if (activeBlock & BLOCK_TRANSFORM) {
-		startPalNum = PalNumTableNormalBlocks[Rand(7u)];
+		startPalNum = BlockPalNum(player, Rand(7u));
 	}
 	else {
 		const uint8_t blockNum = TOBLOCKNUM(activeBlock & BLOCK_TYPE);
 		assert(blockNum < lengthof(PalNumTableNormalBlocks));
-		startPalNum = PalNumTableNormalBlocks[blockNum];
+		startPalNum = BlockPalNum(player, blockNum);
 	}
 	palNum += startPalNum;
 
@@ -465,7 +465,7 @@ static void DisplayThrownOutActiveBlock(Player* player, int16_t x, int16_t y, in
 		scale = UNSCALED;
 	}
 
-	BlockDefSquare* blockDef = BLOCKDEF(activeBlock & BLOCK_TYPE);
+	BlockDefSquare* blockDef = BLOCKDEF(player, activeBlock & BLOCK_TYPE);
 	for (int16_t row = 0, pixelSpread = spread * size; row < 4; row++, squareY += pixelSpread, blockDef += 16u) {
 		BlockDefSquare* blockDefSquare = BLOCKDEFROW(blockDef, rotation, row);
 		for (int16_t col = 0; col < 4; col++, squareX += pixelSpread, blockDefSquare++) {

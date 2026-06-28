@@ -36,7 +36,56 @@
 #include "Lib/Macros.h"
 #include "PlatformTypes.h"
 
-BlockDefSquare BlockDefs[9 * 4 * 4 * 4] = {
+
+
+BlockDefSquare ClassicBlockDefs[9 * 4 * 4 * 4] = {
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+
+	0,0,0,0, 0,0,4,0, 0,0,0,0, 0,0,1,0,
+	1,2,3,4, 0,0,3,0, 4,3,2,1, 0,0,2,0,
+	0,0,0,0, 0,0,2,0, 0,0,0,0, 0,0,3,0,
+	0,0,0,0, 0,0,1,0, 0,0,0,0, 0,0,4,0,
+
+	0,0,0,0, 0,0,4,0, 0,0,0,0, 0,0,1,0,
+	1,2,0,0, 0,2,3,0, 4,3,0,0, 0,3,2,0,
+	0,3,4,0, 0,1,0,0, 0,2,1,0, 0,4,0,0,
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+
+	0,0,0,0, 4,0,0,0, 0,0,0,0, 1,0,0,0,
+	0,3,4,0, 3,2,0,0, 0,2,1,0, 2,3,0,0,
+	1,2,0,0, 0,1,0,0, 4,3,0,0, 0,4,0,0,
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+
+	0,0,0,0, 0,3,4,0, 0,0,0,0, 0,1,0,0,
+	1,2,3,0, 0,2,0,0, 4,0,0,0, 0,2,0,0,
+	0,0,4,0, 0,1,0,0, 3,2,1,0, 4,3,0,0,
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+
+	0,0,0,0, 0,4,0,0, 0,0,0,0, 1,2,0,0,
+	2,3,4,0, 0,3,0,0, 0,0,1,0, 0,3,0,0,
+	1,0,0,0, 0,2,1,0, 4,3,2,0, 0,4,0,0,
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+	0,1,2,0, 0,2,4,0, 0,4,3,0, 0,4,1,0,
+	0,3,4,0, 0,1,3,0, 0,2,1,0, 0,3,2,0,
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+
+	0,0,0,0, 0,3,0,0, 0,0,0,0, 0,1,0,0,
+	1,2,3,0, 0,2,4,0, 0,4,0,0, 4,2,0,0,
+	0,4,0,0, 0,1,0,0, 3,2,1,0, 0,3,0,0,
+	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0
+};
+
+BlockDefSquare WorldBlockDefs[9 * 4 * 4 * 4] = {
 	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
 	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
 	0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
@@ -261,7 +310,9 @@ void InitPlayer(PlayerNum playerNum) {
 
 	// Active block.
 	player->activeBlock = (Block)BLOCKTYPE_I;
-	player->activeRotation = ROTATION_ENTRY;
+	player->rotationSystem = ROTATIONSYSTEM_WORLD;
+	player->blockDefs = WorldBlockDefs;
+	player->activeRotation = ENTRY_ROTATION(player);
 	player->activePos[1] = ENTRYPOS_Y;
 	if (GameFlags & GAME_DOUBLES) {
 		if (player->num == PLAYER1) {
@@ -719,13 +770,13 @@ void UpdatePlayerSelecting(Player* player) {
 	}
 
 	if (state == SELECT_START) {
-		player->subStates[SUBSTATE_SELECT] = SELECT_MODE;
-		player->values[0] = 0;
+		player->subStates[SUBSTATE_SELECT] = SELECT_ROTATION;
+		player->values[0] = MODESELECTION_NORMAL;
 		player->values[1] = TIME(0, 11, 0) - 1;
 		for (int16_t i = 0; i < lengthof(*SelectScales); i++) {
 			SelectScales[player->num][i] = -30 * i;
 		}
-		player->values[0] = MODESELECTION_NORMAL;
+		player->values[2] = (player->rotationSystem == ROTATIONSYSTEM_WORLD) ? 1 : 0;
 		SetMode(player, player->values[0]);
 		SetPal((uint8_t)fieldBorderPalNum, 16u, PAL_NORMALFIELDBORDER);
 		SetPal(15u, 1u, PAL_MODESELECTED);
@@ -745,6 +796,52 @@ void UpdatePlayerSelecting(Player* player) {
 				}
 				return;
 			}
+		}
+	}
+	else if (state == SELECT_ROTATION) {
+		for (int16_t i = 0; i < lengthof(*SelectScales); i++) {
+			if (SelectScales[player->num][i] < UNSCALED) {
+				SelectScales[player->num][i] += 8;
+			}
+			else {
+				SelectScales[player->num][i] = UNSCALED;
+			}
+		}
+		DisplayObjectEx(OBJECT_SELECTMODE, 70, player->screenPos[0], 0u, 125u, UNSCALED, SelectScales[player->num][0], false);
+
+		#define SHOWSELECTROTATIONOPTION(mode, y, modeSelection) ShowText(player->screenPos[0] - TextWidth((mode)) / 2, (y), (mode), player->values[2] == (modeSelection) ? 15u : 14u, false);
+		SHOWSELECTROTATIONOPTION("CLASSIC", 90, 0);
+		SHOWSELECTROTATIONOPTION("WORLD", 105, 1);
+		int16_t rotationSelectionOld = player->values[2];
+		ButtonInput selectButtonRotation = Select(player);
+		if (selectButtonRotation & BUTTON_UP) {
+			if (player->values[2] > 0) {
+				player->values[2]--;
+			}
+		}
+		else if (selectButtonRotation & BUTTON_DOWN) {
+			if (player->values[2] < 1) {
+				player->values[2]++;
+			}
+		}
+		player->values[2] %= 2;
+		if (player->values[2] != rotationSelectionOld) {
+			PlaySoundEffect(SOUNDEFFECT_SELECT);
+		}
+		player->rotationSystem = (player->values[2] == 0) ? ROTATIONSYSTEM_CLASSIC : ROTATIONSYSTEM_WORLD;
+		player->blockDefs = player->rotationSystem == ROTATIONSYSTEM_CLASSIC ? ClassicBlockDefs : WorldBlockDefs;
+
+		if (!(GameButtonsNew[player->num] & (BUTTON_3 | BUTTON_2 | BUTTON_1))) {
+			if (--player->values[1] == 0) {
+				player->subStates[SUBSTATE_SELECT] = SELECT_MODE;
+				player->values[1] = TIME(0, 11, 0) - 1;
+				PlaySoundEffect(SOUNDEFFECT_START);
+			}
+		}
+		else {
+			player->subStates[SUBSTATE_SELECT] = SELECT_MODE;
+			player->values[1] = TIME(0, 11, 0) - 1;
+			PlaySoundEffect(SOUNDEFFECT_SELECT);
 		}
 	}
 	else if (state == SELECT_MODE) {
@@ -1410,7 +1507,7 @@ void UpdateAutoshift(Player* player) {
 // blocked by any matrix squares.
 
 static inline void CountBlockings(const Player* const player, const int16_t col, const int16_t row, const Rotation rotation, const int16_t size, EntryData* const entry) {
-	BlockDefSquare* blockDef = BLOCKDEF(player->activeBlock & BLOCK_TYPE);
+	BlockDefSquare* blockDef = BLOCKDEF(player, player->activeBlock & BLOCK_TYPE);
 	for (int16_t blockRow = 0; blockRow < size; blockRow++) {
 		int16_t matrixRow = row - blockRow;
 		if (matrixRow < player->matrixHeight) {
@@ -1465,7 +1562,95 @@ static bool Blocked(Player* player, int16_t col, int16_t row, Rotation rotation)
 // use F32I(player->activePos[]) for matrix square checking instead. And maybe
 // make this function update the player's active block rotation too, rather
 // than requiring it be updated after calling this.
-bool RotationBlockedCheckKick(Player* player, int16_t col, int16_t row, Rotation rotation) {
+static bool ClassicRotationBlockedCheckKick(Player* player, int16_t col, int16_t row, Rotation rotation) {
+	if (player->activeBlock & BLOCK_BIG) {
+		col -= 2;
+		for (int16_t defRow = 0; defRow < 8; defRow++) {
+			if ((row + 1) - defRow < player->matrixHeight) {
+				for (int16_t defCol = 0; defCol < 8; defCol++) {
+					if (
+						col + defCol >= 0 &&
+						col + defCol <= (int8_t)player->matrixWidth - 1 &&
+						DEFBLOCKBIG(player, player->activeBlock & BLOCK_TYPE, rotation, defRow, defCol) != DEFBLOCK_EMPTY &&
+						(MATRIX(player, (row + 1) - defRow, col + defCol).block & ~BLOCK_INVISIBLE) != NULLBLOCK) {
+						// The active block is blocked in the current
+						// position/rotation.
+
+						// I blocks never kick.
+						if ((player->activeBlock & BLOCK_TYPE) == BLOCKTYPE_I) {
+							return true;
+						}
+
+						// Reject rotations blocked in the middle column of 3x3 blocks.
+						if (defCol == 2 || defCol == 3) {
+							return true;
+						}
+
+						// Kick right by default.
+						for (int16_t kick = 1; kick < 2; kick++) {
+							if (!Blocked(player, col + kick * 2 + 2, row, rotation)) {
+								player->activePos[0].integer += kick * 2;
+								return false;
+							}
+						}
+						// Failing that, kick left.
+						for (int16_t kick = 1; kick < 2; kick++) {
+							if (!Blocked(player, col - kick * 2 + 2, row, rotation)) {
+								player->activePos[0].integer -= kick * 2;
+								return false;
+							}
+						}
+						return true;
+					}
+				}
+			}
+		}
+	}
+	else {
+		for (int16_t defRow = 0; defRow < 4; defRow++) {
+			if (row - defRow < player->matrixHeight) {
+				for (int16_t defCol = 0; defCol < 4; defCol++) {
+					if (
+						col + defCol >= 0 &&
+						col + defCol <= player->matrixWidth - 1 &&
+						DEFBLOCK(player, player->activeBlock & BLOCK_TYPE, rotation, defRow, defCol) != DEFBLOCK_EMPTY &&
+						(MATRIX(player, row - defRow, col + defCol).block & ~BLOCK_INVISIBLE) != NULLBLOCK) {
+						// The active block is blocked in the current
+						// position/rotation.
+
+						// I blocks never kick.
+						if ((player->activeBlock & BLOCK_TYPE) == BLOCKTYPE_I) {
+							return true;
+						}
+
+						// Reject rotations blocked in the middle column of 3x3 blocks.
+						if (defCol == 1) {
+							return true;
+						}
+
+						// Kick right by default.
+						if (!Blocked(player, col + 1, row, rotation)) {
+							player->activePos[0].integer++;
+							return false;
+						}
+						// Failing that, kick left.
+						else if (!Blocked(player, col - 1, row, rotation)) {
+							player->activePos[0].integer--;
+							return false;
+						}
+						else {
+							return true;
+						}
+					}
+				}
+			}
+		}
+	}
+	return false;
+}
+
+
+static bool WorldRotationBlockedCheckKick(Player* player, int16_t col, int16_t row, Rotation rotation) {
 	// SRS Wall Kick Data
 	// SRS uses different kick tables for I and other pieces
 	// Each entry: {x, y} offset
@@ -1521,7 +1706,7 @@ bool RotationBlockedCheckKick(Player* player, int16_t col, int16_t row, Rotation
 							if (
 								test_col + defCol >= 0 &&
 								test_col + defCol <= (int8_t)player->matrixWidth - 1 &&
-								DEFBLOCKBIG(player->activeBlock & BLOCK_TYPE, rotation, defRow, defCol) != DEFBLOCK_EMPTY &&
+								DEFBLOCKBIG(player, player->activeBlock & BLOCK_TYPE, rotation, defRow, defCol) != DEFBLOCK_EMPTY &&
 								(MATRIX(player, (test_row + 1) - defRow, test_col + defCol).block & ~BLOCK_INVISIBLE) != NULLBLOCK) {
 								blocked = true;
 								break;
@@ -1537,7 +1722,7 @@ bool RotationBlockedCheckKick(Player* player, int16_t col, int16_t row, Rotation
 							if (
 								test_col + defCol >= 0 &&
 								test_col + defCol <= player->matrixWidth - 1 &&
-								DEFBLOCK(player->activeBlock & BLOCK_TYPE, rotation, defRow, defCol) != DEFBLOCK_EMPTY &&
+								DEFBLOCK(player, player->activeBlock & BLOCK_TYPE, rotation, defRow, defCol) != DEFBLOCK_EMPTY &&
 								(MATRIX(player, test_row - defRow, test_col + defCol).block & ~BLOCK_INVISIBLE) != NULLBLOCK) {
 								blocked = true;
 								break;
@@ -1579,7 +1764,7 @@ bool RotationBlockedCheckKick(Player* player, int16_t col, int16_t row, Rotation
 							if (
 								test_col + defCol >= 0 &&
 								test_col + defCol <= (int8_t)player->matrixWidth - 1 &&
-								DEFBLOCKBIG(player->activeBlock & BLOCK_TYPE, rotation, defRow, defCol) != DEFBLOCK_EMPTY &&
+								DEFBLOCKBIG(player, player->activeBlock & BLOCK_TYPE, rotation, defRow, defCol) != DEFBLOCK_EMPTY &&
 								(MATRIX(player, (test_row + 1) - defRow, test_col + defCol).block & ~BLOCK_INVISIBLE) != NULLBLOCK) {
 								blocked = true;
 								break;
@@ -1595,7 +1780,7 @@ bool RotationBlockedCheckKick(Player* player, int16_t col, int16_t row, Rotation
 							if (
 								test_col + defCol >= 0 &&
 								test_col + defCol <= player->matrixWidth - 1 &&
-								DEFBLOCK(player->activeBlock & BLOCK_TYPE, rotation, defRow, defCol) != DEFBLOCK_EMPTY &&
+								DEFBLOCK(player, player->activeBlock & BLOCK_TYPE, rotation, defRow, defCol) != DEFBLOCK_EMPTY &&
 								(MATRIX(player, test_row - defRow, test_col + defCol).block & ~BLOCK_INVISIBLE) != NULLBLOCK) {
 								blocked = true;
 								break;
@@ -1613,6 +1798,13 @@ bool RotationBlockedCheckKick(Player* player, int16_t col, int16_t row, Rotation
 		}
 		return true;
 	}
+}
+
+bool RotationBlockedCheckKick(Player* player, int16_t col, int16_t row, Rotation rotation) {
+	if (player->rotationSystem == ROTATIONSYSTEM_CLASSIC) {
+		return ClassicRotationBlockedCheckKick(player, col, row, rotation);
+	}
+	return WorldRotationBlockedCheckKick(player, col, row, rotation);
 }
 
 void CheckShiftActiveBlock(Player* player) {
@@ -1727,7 +1919,14 @@ void LandActiveBlock(Player* player, Fixed32 gravityStep) {
 			}
 
 			player->activePos[1].fraction = 0xFFFFu;
-			if ((GameButtonsDown[player->num] & DiagonalUpperwardMask) == BUTTON_UP) {
+			bool manualLock;
+			if (player->rotationSystem == ROTATIONSYSTEM_CLASSIC) {
+				manualLock = (GameButtonsDown[player->num] & BUTTON_ALLDIRECTIONS) == BUTTON_DOWN;
+			}
+			else {
+				manualLock = (GameButtonsDown[player->num] & DiagonalUpperwardMask) == BUTTON_UP;
+			}
+			if (manualLock) {
 				if (player->modeFlags & MODE_TADEATH) {
 					if (player->level >= 0u) {
 						if (ManualLockUnprotected[player->num]) {
@@ -1750,11 +1949,13 @@ void LandActiveBlock(Player* player, Fixed32 gravityStep) {
 		}
 
 		// In TGM3 World rule, a tetromino can only rotated 8 times after its initial landing.
-		player->landingFlag = true;
+		if (player->rotationSystem == ROTATIONSYSTEM_WORLD) {
+			player->landingFlag = true;
 
-		if (player->moveResetTimes >= MAX_MOVE_RESET_TIMES
-			|| player->rotationResetTimes >= MAX_ROTATION_RESET_TIMES) {
-			player->lockFrames = 0;
+			if (player->moveResetTimes >= MAX_MOVE_RESET_TIMES
+				|| player->rotationResetTimes >= MAX_ROTATION_RESET_TIMES) {
+				player->lockFrames = 0;
+			}
 		}
 	}
 
@@ -1926,7 +2127,7 @@ void UpdatePlayActive(Player* player) {
 }
 
 static inline void WriteBlockToMatrix(Player* const player, const LockType lockType, const BlockType lockBlockType, const int16_t lockCol, const int16_t lockRow, const Rotation lockRotation, const int16_t lockBlockSize, const int16_t visibleFrames) {
-	BlockDefSquare* blockDef = BLOCKDEF(lockBlockType);
+	BlockDefSquare* blockDef = BLOCKDEF(player, lockBlockType);
 	for (int16_t blockRow = 0; blockRow < lockBlockSize; blockRow++) {
 		int16_t matrixRow = lockRow - blockRow;
 		if (matrixRow < player->matrixHeight) {
@@ -2532,7 +2733,7 @@ void UpdatePlayNext(Player* player) {
 	}
 
 	// Entry position.
-	player->activeRotation = ROTATION_ENTRY;
+	player->activeRotation = ENTRY_ROTATION(player);
 	Fixed32 activeCol;
 	if (GameFlags & GAME_DOUBLES) {
 		if (player->num == PLAYER1) {
@@ -3494,6 +3695,10 @@ void CheckDisableItemDescription(Player* player) {
 }
 
 void ResetLockDelay(Player* player, const ResetType resetType) {
+	if (player->rotationSystem != ROTATIONSYSTEM_WORLD) {
+		return;
+	}
+
 	if (resetType == RESETTYPE_MOVE) {
 		if (++(player->moveResetTimes) < MAX_MOVE_RESET_TIMES) {
 			player->lockFrames = player->lockDelay;

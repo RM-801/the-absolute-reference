@@ -10,6 +10,13 @@
 #include <assert.h>
 
 const uint16_t PalNumTableNormalBlocks[11] = { 58u, 68u, 78u, 88u, 98u, 108u, 118u, 48u, 128u, 138u, 16u };
+
+uint16_t BlockPalNum(const Player* player, uint8_t blockNum) {
+	static const uint16_t ClassicPalNums[7] = { 68u, 78u, 118u, 88u, 98u, 108u, 58u };
+	static const uint16_t WorldPalNums[7] = { 58u, 68u, 78u, 88u, 98u, 108u, 118u };
+	assert(blockNum < lengthof(ClassicPalNums));
+	return player->rotationSystem == ROTATIONSYSTEM_CLASSIC ? ClassicPalNums[blockNum] : WorldPalNums[blockNum];
+}
 const uint16_t PalNumTableItemBlocks[NUMITEMTYPES] = { 226u, 226u, 226u, 236u, 236u, 236u, 236u, 236u, 226u, 226u, 226u, 226u, 226u, 226u, 246u, 226u, 246u, 226u, 226u };
 const Color* PalTableItemFieldBorder[NUMITEMTYPES] = {
 	PAL_REDFIELDBORDER,
@@ -70,7 +77,7 @@ void ShowBlock(Player* player, ShowBlockType showBlockType, bool show) {
 				rotation = player->activeRotation;
 			}
 			else {
-				rotation = ROTATION_ENTRY;
+				rotation = ENTRY_ROTATION(player);
 			}
 
 			int16_t col;
@@ -159,7 +166,7 @@ void ShowBlock(Player* player, ShowBlockType showBlockType, bool show) {
 				blockNum = TOBLOCKNUM((size_t)block & BLOCK_TYPE);
 			}
 			assert(blockNum < lengthof(PalNumTableNormalBlocks));
-			palOffset = PalNumTableNormalBlocks[blockNum];
+			palOffset = BlockPalNum(player, blockNum);
 		}
 		palNum += palOffset;
 
@@ -174,7 +181,7 @@ void ShowBlock(Player* player, ShowBlockType showBlockType, bool show) {
 			scale = UNSCALED;
 		}
 
-		BlockDefSquare* blockDef = BLOCKDEF(block & BLOCK_TYPE);
+		BlockDefSquare* blockDef = BLOCKDEF(player, block & BLOCK_TYPE);
 		int16_t displaySize = blockSize * 8;
 		for (int16_t row = 0, y = startY; row < 4; row++, y += displaySize) {
 			BlockDefSquare* blockDefRow = BLOCKDEFROW(blockDef, rotation, row);
@@ -273,7 +280,7 @@ void ShowField(Player* player) {
 				if (!(block & BLOCK_FLASH)) {
 					const uint8_t blockNum = TOBLOCKNUM(block & BLOCK_TYPE);
 					assert(blockNum < lengthof(PalNumTableNormalBlocks));
-					uint8_t blockPalNum = PalNumTableNormalBlocks[blockNum] + 5u;
+					uint8_t blockPalNum = BlockPalNum(player, blockNum) + 5u;
 					if (player->activeItemType == ITEMTYPE_GAMEOVER) {
 						int8_t brightness = MATRIX(player, player->matrixHeight - row - 1, col).brightness;
 						if (brightness > 5) {
@@ -416,7 +423,7 @@ void ShowFieldPlus(Player* player) {
 				else {
 					const uint8_t blockNum = TOBLOCKNUM(block & BLOCK_TYPE);
 					assert(blockNum < lengthof(PalNumTableNormalBlocks));
-					palNum = PalNumTableNormalBlocks[blockNum] + 5u;
+					palNum = BlockPalNum(player, blockNum) + 5u;
 					if (player->activeItemType == ITEMTYPE_GAMEOVER) {
 						if (block & BLOCK_ITEM) {
 							palNum = PalNumTableItemBlocks[TOITEMNUM(MATRIX(player, player->matrixHeight - row - 1, col).itemType)] + 5u;
@@ -447,7 +454,7 @@ void ShowFieldPlus(Player* player) {
 									palNum = (uint8_t)PalNumTableItemBlocks[TOITEMNUM(MATRIX(player, player->matrixHeight - row - 1, col).itemType)];
 								}
 								else {
-									palNum = (uint8_t)PalNumTableNormalBlocks[blockNum];
+									palNum = (uint8_t)BlockPalNum(player, blockNum);
 								}
 								palNum += MATRIX(player, row, col).brightness;
 							}
@@ -455,7 +462,7 @@ void ShowFieldPlus(Player* player) {
 						else if (block & BLOCK_FADING) {
 							if (MATRIX(player, player->matrixHeight - row - 1, col).visibleFrames == 0) {
 								MATRIX(player, player->matrixHeight - row - 1, col).block |= BLOCK_INVISIBLE;
-								palNum = (uint8_t)PalNumTableNormalBlocks[blockNum];
+								palNum = (uint8_t)BlockPalNum(player, blockNum);
 							}
 							else if (--MATRIX(player, player->matrixHeight - row - 1, col).visibleFrames < 10) {
 								palNum -= 5u - MATRIX(player, player->matrixHeight - row - 1, col).visibleFrames / 2;

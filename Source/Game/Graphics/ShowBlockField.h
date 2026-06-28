@@ -6,6 +6,7 @@
 #include <stdbool.h>
 
 extern const uint16_t PalNumTableNormalBlocks[11];
+uint16_t BlockPalNum(const Player* player, uint8_t blockNum);
 extern const uint16_t PalNumTableItemBlocks[NUMITEMTYPES];
 extern const Color* PalTableItemFieldBorder[NUMITEMTYPES];
 

@@ -24,6 +24,7 @@ typedef enum SubState {
 typedef enum SelectState {
 	SELECT_START = 0,
 	SELECT_MODE = 10,
+	SELECT_ROTATION = 5,
 	// NOTE: If the select state is 20 or 21, then no updating of selection is done.
 	SELECT_20 = 20,
 	SELECT_21 = 21,
@@ -200,14 +201,19 @@ typedef enum Rotation {
 	ROTATION_DOWN,
 	ROTATION_RIGHT,
 	ROTATION_UP,
-	ROTATION_LEFT,
-	ROTATION_ENTRY = ROTATION_UP // SRS
+	ROTATION_LEFT
 } Rotation;
 #define ROTATE_LEFT(r) (((r) + 1) % 4)
 #define ROTATE_RIGHT(r) (((r) + 3) % 4)
 #define ROTATED_ANY(buttons) ((buttons) & (BUTTON_1 | BUTTON_2 | BUTTON_3))
 #define ROTATED_LEFT(buttons) ((buttons) & (BUTTON_1 | BUTTON_3))
 #define ROTATED_RIGHT(buttons) ((buttons) & BUTTON_2)
+
+typedef enum RotationSystem {
+	ROTATIONSYSTEM_CLASSIC,
+	ROTATIONSYSTEM_WORLD
+} RotationSystem;
+#define ENTRY_ROTATION(player) ((player)->rotationSystem == ROTATIONSYSTEM_CLASSIC ? ROTATION_DOWN : ROTATION_UP)
 
 #define MATRIX(player, row, col) ((player)->matrix[(row) * (player)->matrixWidth + (col)])
 
@@ -268,6 +274,8 @@ struct Player {
 	Block activeBlock;
 	Block nextBlock;
 	Rotation activeRotation;
+	RotationSystem rotationSystem;
+	const uint8_t* blockDefs;
 	Fixed32 activePos[2];
 	uint8_t history[4];
 	ItemBagFlag itemBag;
@@ -387,14 +395,15 @@ void ShowPlayers();
 // The first two block definitions, for empty and wall block types, are unused,
 // and only present so BLOCKTYPE_* constants can be used with BLOCKDEF.
 typedef const uint8_t BlockDefSquare;
-extern BlockDefSquare BlockDefs[9 * 4 * 4 * 4];
-#define BLOCKDEF(type) (&BlockDefs[(type) * 4 * 4 * 4])
+extern BlockDefSquare ClassicBlockDefs[9 * 4 * 4 * 4];
+extern BlockDefSquare WorldBlockDefs[9 * 4 * 4 * 4];
+#define BLOCKDEF(player, type) (&(player)->blockDefs[(type) * 4 * 4 * 4])
 #define BLOCKDEFROW(def, rotation, row) (&((def)[(rotation) * 4 + (row) * 4 * 4]))
 #define BLOCKDEFROWBIG(def, rotation, row) (&(def)[(rotation) * 4 + ((row) / 2) * 4 * 4])
 #define BLOCKDEFCOL(rowDef, col) ((rowDef)[(col)])
 #define BLOCKDEFCOLBIG(rowDef, col) ((rowDef)[(col) / 2])
-#define DEFBLOCK(type, rotation, row, col) BLOCKDEFCOL(BLOCKDEFROW(BLOCKDEF((type)), (rotation), (row)), (col))
-#define DEFBLOCKBIG(type, rotation, row, col) BLOCKDEFCOL(BLOCKDEFROW(BLOCKDEF((type)), (rotation), (row) / 2), (col) / 2)
+#define DEFBLOCK(player, type, rotation, row, col) BLOCKDEFCOL(BLOCKDEFROW(BLOCKDEF((player), (type)), (rotation), (row)), (col))
+#define DEFBLOCKBIG(player, type, rotation, row, col) BLOCKDEFCOL(BLOCKDEFROW(BLOCKDEF((player), (type)), (rotation), (row) / 2), (col) / 2)
 #define DEFBLOCK_EMPTY 0u
 
 void NextPlay(Player* player, PlayData play);
