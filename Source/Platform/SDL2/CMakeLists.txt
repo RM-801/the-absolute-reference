@@ -39,6 +39,7 @@ set(PLATFORM_HEADERS
 
 find_package(SDL2 REQUIRED)
 find_package(PhysFS REQUIRED)
+include_directories("${PHYSFS_INCLUDE_DIR}")
 
 include(${SRC}/Platform/Util/AddBinary.cmake)
 

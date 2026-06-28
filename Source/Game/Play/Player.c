@@ -310,8 +310,8 @@ void InitPlayer(PlayerNum playerNum) {
 
 	// Active block.
 	player->activeBlock = (Block)BLOCKTYPE_I;
-	player->rotationSystem = ROTATIONSYSTEM_WORLD;
-	player->blockDefs = WorldBlockDefs;
+	player->rotationSystem = ROTATIONSYSTEM_CLASSIC;
+	player->blockDefs = ClassicBlockDefs;
 	player->activeRotation = ENTRY_ROTATION(player);
 	player->activePos[1] = ENTRYPOS_Y;
 	if (GameFlags & GAME_DOUBLES) {

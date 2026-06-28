@@ -1,4 +1,5 @@
 #include "Game/Graphics/ShowEffect.h"
+#include "Platform/Util/AccessData.h"
 #include "Game/Graphics/ShowBlockField.h"
 #include "Game/Graphics/Entity.h"
 #include "Game/Graphics/DisplayObject.h"
@@ -431,6 +432,8 @@ static void DisplayThrownOutActiveBlock(Player* player, int16_t x, int16_t y, in
 	else {
 		blockObject = &OBJECTTABLE_NORMALBLOCKS[0];
 	}
+	ObjectData worldBlockObject;
+	blockObject = WorldBlockObject(player, activeBlock, WORLD_BLOCK_RAW_BORDER, blockObject, &worldBlockObject);
 
 	// Select the starting palette number, adding it to the brightness selected
 	// earlier.

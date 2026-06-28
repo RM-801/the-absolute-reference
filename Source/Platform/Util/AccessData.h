@@ -16,8 +16,14 @@ void CloseProgramData(const uint8_t* const programData);
 #define TILEROM_SIZE 0x200000
 #define NUMTILEROMS 16
 #define TILEDATA_SIZE (TILEROM_SIZE * NUMTILEROMS)
+#define WORLD_BLOCK_COLOR_COUNT 8u
+#define WORLD_BLOCK_BORDER_COUNT 17u
+#define WORLD_BLOCK_RAW_BORDER 16u
+#define WORLD_BLOCK_TILE_COUNT (WORLD_BLOCK_COLOR_COUNT * WORLD_BLOCK_BORDER_COUNT)
+#define WORLD_BLOCK_TILE_BASE (0xC000u + TILEDATA_SIZE / NUMPALCOLORS_8BPP)
 
 extern uint8_t* TileData;
+extern Color WorldBlockPalette[NUMPALCOLORS_8BPP];
 bool OpenTileData();
 void CloseTileData();
 

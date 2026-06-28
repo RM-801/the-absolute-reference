@@ -4,6 +4,7 @@
 #include "Main/DemoReplayInput.h"
 #include "Video/Pal.h"
 #include "Sound/Sound.h"
+#include "Platform/Util/WorldBlockData.h"
 #include "physfs.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,6 +18,7 @@ ROMDATA Color PalSmallText[NUMPALCOLORS_4BPP];
 // NOTE: For constant data loaded into RAM, take the RAM address and subtract 0x5FFF860 to get the address in program ROM.
 
 uint8_t* TileData;
+Color WorldBlockPalette[NUMPALCOLORS_8BPP];
 static const char* const TileRomFileNames[NUMTILEROMS] = {
     "roms/tgm2/81ts_3l.u6",
     "roms/tgm2/82ts_3h.u14",
@@ -306,7 +308,7 @@ void CloseProgramData(const uint8_t* const programData) {
 }
 
 bool OpenTileData() {
-	TileData = malloc(TILEDATA_SIZE);
+	TileData = malloc(TILEDATA_SIZE + WORLD_BLOCK_TILE_COUNT * NUMPALCOLORS_8BPP);
 	if (!TileData) {
 		fprintf(stderr, "Failed allocating memory for tile data\n");
 		return false;
@@ -344,6 +346,19 @@ bool OpenTileData() {
 		}
 	}
 	free(tileDataTemp);
+
+	for (size_t colorIndex = 0u; colorIndex < NUMPALCOLORS_8BPP; colorIndex++) {
+		const uint8_t* const color = WorldBlockPaletteData[colorIndex];
+		WorldBlockPalette[colorIndex] = COLOR(color[0], color[1], color[2], 0u);
+	}
+
+	uint8_t* const worldTiles = &TileData[TILEDATA_SIZE];
+	for (size_t blockNum = 0u; blockNum < WORLD_BLOCK_COLOR_COUNT; blockNum++) {
+		for (size_t borderMask = 0u; borderMask < WORLD_BLOCK_BORDER_COUNT; borderMask++) {
+			uint8_t* const tile = &worldTiles[(blockNum * WORLD_BLOCK_BORDER_COUNT + borderMask) * NUMPALCOLORS_8BPP];
+			memcpy(tile, WorldBlockTileData[blockNum], NUMPALCOLORS_8BPP);
+		}
+	}
 
 	return true;
 }

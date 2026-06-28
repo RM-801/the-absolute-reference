@@ -1,4 +1,5 @@
 #include "Platform/Util/Render/Render.h"
+#include "Platform/Util/AccessData.h"
 #include "Video/VideoDefs.h"
 #include "Video/Object.h"
 #include "Video/HwSprite.h"
@@ -40,6 +41,28 @@ static void RenderClearRasters(Color* const framebuffer) {
 }
 
 #define GETSPRITEPRIORITY(priority) ((SpritePriority[(priority) / 2u] >> (4u * (((priority) + 1u) % 2u))) & 0xFu)
+
+static uint32_t WorldBlockBrightness(const uint32_t tile, const uint32_t palNum) {
+	if (palNum == 0u) {
+		return 0x80u;
+	}
+	static const uint8_t BasePalNums[WORLD_BLOCK_COLOR_COUNT] = { 58u, 68u, 78u, 88u, 98u, 108u, 118u, 48u };
+	const uint8_t basePalNum = BasePalNums[(tile - WORLD_BLOCK_TILE_BASE) / WORLD_BLOCK_BORDER_COUNT];
+	if (palNum < basePalNum || palNum > basePalNum + 9u) {
+		return 0xFFu;
+	}
+	uint32_t currentMax = 0u;
+	uint32_t fullMax = 0u;
+	for (size_t colorIndex = 1u; colorIndex < NUMPALCOLORS_4BPP; colorIndex++) {
+		const Color current = PALRAM[palNum * NUMPALCOLORS_4BPP + colorIndex];
+		const Color full = PALRAM[(basePalNum + 9u) * NUMPALCOLORS_4BPP + colorIndex];
+		const uint32_t currentValue = COLOR_GETR(current) + COLOR_GETG(current) + COLOR_GETB(current);
+		const uint32_t fullValue = COLOR_GETR(full) + COLOR_GETG(full) + COLOR_GETB(full);
+		if (currentValue > currentMax) currentMax = currentValue;
+		if (fullValue > fullMax) fullMax = fullValue;
+	}
+	return fullMax == 0u ? 0xFFu : currentMax * 0xFFu / fullMax;
+}
 
 static void RenderSprites(Color* const framebuffer, const uint8_t* const tileData, const uint8_t priority) {
 	if (!(SpriteNames[0] & SPRITENAME_TERMINATE) && !(SpriteNames[1] & SPRITENAME_TERMINATE)) {
@@ -83,6 +106,8 @@ static void RenderSprites(Color* const framebuffer, const uint8_t* const tileDat
 				continue;
 			}
 			const uint32_t tile = OBJECT_GETTILE(sprite);
+			const bool worldBlockTile = bpp == BPP_8 && tile >= WORLD_BLOCK_TILE_BASE && tile < WORLD_BLOCK_TILE_BASE + WORLD_BLOCK_TILE_COUNT;
+			const uint32_t worldBlockBrightness = worldBlockTile ? WorldBlockBrightness(tile, palNum) : 0xFFu;
 
 			const int16_t renderW = (((w << 24) / scaleX) + 0x200) >> 10;
 			const int16_t renderH = (((h << 24) / scaleY) + 0x200) >> 10;
@@ -111,14 +136,40 @@ static void RenderSprites(Color* const framebuffer, const uint8_t* const tileDat
 							(tileOffsetY << (3 + bpp))
 						] >> (4 * !(tileOffsetX & 1) * !bpp)
 					) & ((0xF0u * bpp) | 0x0Fu);
+					const uint32_t borderMask = worldBlockTile ? (tile - WORLD_BLOCK_TILE_BASE) % WORLD_BLOCK_BORDER_COUNT : WORLD_BLOCK_RAW_BORDER;
+					const bool worldBlockBorderPixel = worldBlockTile && borderMask != WORLD_BLOCK_RAW_BORDER && (
+						((borderMask & 1u) && tileOffsetY == 0 && tileOffsetX < 8) ||
+						((borderMask & 2u) && tileOffsetY == 7 && tileOffsetX < 8) ||
+						((borderMask & 4u) && tileOffsetX == 0 && tileOffsetY < 8) ||
+						((borderMask & 8u) && tileOffsetX == 7 && tileOffsetY < 8)
+					);
 
 					// Skip fully transparent pixels.
-					if (palOffset == 0u) {
+					if (palOffset == 0u && !worldBlockBorderPixel) {
 						continue;
 					}
 					else {
-						uint32_t blendAlpha = ((alpha == PIXELALPHA) ? AlphaTable[palOffset] : alpha) & 0xFFu;
-						const Color* const color = &PALRAM[palNum * NUMPALCOLORS_4BPP + palOffset];
+						uint32_t blendAlpha = worldBlockBorderPixel ? 0xFFu : ((alpha == PIXELALPHA) ? AlphaTable[palOffset] : alpha) & 0xFFu;
+						Color worldBlockColor;
+						const Color* color;
+						if (worldBlockTile) {
+							if (worldBlockBorderPixel) {
+								worldBlockColor = COLOR(0xA0u, 0xA0u, 0xA0u, 0u);
+							}
+							else {
+								worldBlockColor = WorldBlockPalette[palOffset];
+								worldBlockColor = COLOR(
+									COLOR_GETR(worldBlockColor) * worldBlockBrightness / 0xFFu,
+									COLOR_GETG(worldBlockColor) * worldBlockBrightness / 0xFFu,
+									COLOR_GETB(worldBlockColor) * worldBlockBrightness / 0xFFu,
+									0u
+								);
+							}
+							color = &worldBlockColor;
+						}
+						else {
+							color = &PALRAM[palNum * NUMPALCOLORS_4BPP + palOffset];
+						}
 						Color* const pixel = &framebuffer[(y + offsetY) * VIDEO_WIDTH + x + offsetX];
 						// Skip fully transparent pixels.
 						if (blendAlpha == 0x00u) {

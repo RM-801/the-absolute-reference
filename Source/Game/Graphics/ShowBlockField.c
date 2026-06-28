@@ -5,9 +5,11 @@
 #include "Video/Object.h"
 #include "Video/Video.h"
 #include "Video/Pal.h"
+#include "Platform/Util/AccessData.h"
 #include "Lib/Math.h"
 #include <inttypes.h>
 #include <assert.h>
+#include <string.h>
 
 const uint16_t PalNumTableNormalBlocks[11] = { 58u, 68u, 78u, 88u, 98u, 108u, 118u, 48u, 128u, 138u, 16u };
 
@@ -16,6 +18,18 @@ uint16_t BlockPalNum(const Player* player, uint8_t blockNum) {
 	static const uint16_t WorldPalNums[7] = { 58u, 68u, 78u, 88u, 98u, 108u, 118u };
 	assert(blockNum < lengthof(ClassicPalNums));
 	return player->rotationSystem == ROTATIONSYSTEM_CLASSIC ? ClassicPalNums[blockNum] : WorldPalNums[blockNum];
+}
+
+const ObjectData* WorldBlockObject(const Player* player, Block block, uint8_t borderMask, const ObjectData* source, ObjectData* destination) {
+	if (player->rotationSystem != ROTATIONSYSTEM_WORLD || (block & (BLOCK_HARD | BLOCK_ITEM | BLOCK_ROLLROLL | BLOCK_TRANSFORM))) {
+		return source;
+	}
+	memcpy(destination, &OBJECTTABLE_NORMALBLOCKS[0], sizeof(*destination));
+	OBJECT_SETBPP(destination, BPP_8);
+	const uint8_t tileIndex = block & BLOCK_FLASH ? 7u : TOBLOCKNUM(block & BLOCK_TYPE);
+	OBJECT_SETTILE(destination, WORLD_BLOCK_TILE_BASE + tileIndex * WORLD_BLOCK_BORDER_COUNT + borderMask);
+	OBJECT_SETPALNUM(destination, 0u);
+	return destination;
 }
 const uint16_t PalNumTableItemBlocks[NUMITEMTYPES] = { 226u, 226u, 226u, 236u, 236u, 236u, 236u, 236u, 226u, 226u, 226u, 226u, 226u, 226u, 246u, 226u, 246u, 226u, 226u };
 const Color* PalTableItemFieldBorder[NUMITEMTYPES] = {
@@ -145,6 +159,8 @@ void ShowBlock(Player* player, ShowBlockType showBlockType, bool show) {
 		else {
 			blockObject = &OBJECTTABLE_NORMALBLOCKS[0];
 		}
+		ObjectData worldBlockObject;
+		blockObject = (ObjectData*)WorldBlockObject(player, block, WORLD_BLOCK_RAW_BORDER, blockObject, &worldBlockObject);
 
 		int16_t palOffset;
 		if (block & BLOCK_ITEM) {
@@ -169,6 +185,9 @@ void ShowBlock(Player* player, ShowBlockType showBlockType, bool show) {
 			palOffset = BlockPalNum(player, blockNum);
 		}
 		palNum += palOffset;
+		if (showBlockType == SHOWBLOCKTYPE_TLS && player->rotationSystem == ROTATIONSYSTEM_WORLD) {
+			palNum = 0;
+		}
 
 		int16_t blockSize;
 		SpriteScale scale;
@@ -317,6 +336,8 @@ void ShowField(Player* player) {
 					MATRIX(player, player->matrixHeight - row - 1, col).block = block;
 					palNum = 137u;
 				}
+				ObjectData worldBlockObject;
+				blockObject = WorldBlockObject(player, block, blockBorders, blockObject, &worldBlockObject);
 				if (!(block & BLOCK_INVISIBLE)) {
 					DisplayObject(blockObject, displayY, displayX, palNum, LAYER_MATRIX);
 				}
@@ -409,6 +430,8 @@ void ShowFieldPlus(Player* player) {
 				if (block & BLOCK_ITEM) {
 					srcBlockObject = &OBJECTTABLE_ITEMBLOCKS[TOITEMNUM(MATRIX(player, player->matrixHeight - row - 1, col).itemType)];
 				}
+				ObjectData worldBlockObject;
+				srcBlockObject = WorldBlockObject(player, block, blockBorders, srcBlockObject, &worldBlockObject);
 				if (block & BLOCK_FLASH) {
 					int16_t flashFrames = GETBLOCKFLASHFRAMES(block);
 					if (flashFrames - 1 == 0) {
@@ -471,20 +494,25 @@ void ShowFieldPlus(Player* player) {
 					}
 				}
 				if ((!(block & BLOCK_FADING) || MATRIX(player, player->matrixHeight - row - 1, col).visibleFrames != 0) && !(block & BLOCK_INVISIBLE)) {
-					for (size_t i = 0; i < sizeof(ObjectData) / sizeof(uint16_t); i++) {
-						(*blockObject)[i] = (*srcBlockObject)[i];
+					if (srcBlockObject == &worldBlockObject) {
+						DisplayObject(srcBlockObject, displayY, displayX, palNum, LAYER_MATRIX);
 					}
-					// NOTE: This sets the object's number of sprites to 1; the
-					// setting of the number of sprites is unnecessary, as the
-					// code modifies the sprite number field below to display
-					// in 31-sprite or less chunks, but the setting is kept
-					// here for documentation.
-					OBJECT_SETX(blockObject, displayX);
-					OBJECT_SETNUMSPRITES(blockObject, 1u);
-					OBJECT_SETY(blockObject, displayY);
-					OBJECT_SETPALNUM(blockObject, palNum);
-					blockObject++;
-					numBlockObjects++;
+					else {
+						for (size_t i = 0; i < sizeof(ObjectData) / sizeof(uint16_t); i++) {
+							(*blockObject)[i] = (*srcBlockObject)[i];
+						}
+						// NOTE: This sets the object's number of sprites to 1; the
+						// setting of the number of sprites is unnecessary, as the
+						// code modifies the sprite number field below to display
+						// in 31-sprite or less chunks, but the setting is kept
+						// here for documentation.
+						OBJECT_SETX(blockObject, displayX);
+						OBJECT_SETNUMSPRITES(blockObject, 1u);
+						OBJECT_SETY(blockObject, displayY);
+						OBJECT_SETPALNUM(blockObject, palNum);
+						blockObject++;
+						numBlockObjects++;
+					}
 				}
 			}
 		}
