@@ -310,7 +310,9 @@ void InitPlayer(PlayerNum playerNum) {
 
 	// Active block.
 	player->activeBlock = (Block)BLOCKTYPE_I;
+	player->rotationMode = ROTATIONSYSTEM_CLASSIC;
 	player->rotationSystem = ROTATIONSYSTEM_CLASSIC;
+	player->nextRotationSystem = ROTATIONSYSTEM_CLASSIC;
 	player->blockDefs = ClassicBlockDefs;
 	player->activeRotation = ENTRY_ROTATION(player);
 	player->activePos[1] = ENTRYPOS_Y;
@@ -477,8 +479,23 @@ void UpdatePlayerPlaying(Player* player) {
 		return;
 	}
 
-	if (!(GameButtonsDown[player->num] & BUTTON_DOWN)) {
-		ManualLockUnprotected[player->num] = true;
+	if (player->rotationMode == ROTATIONSYSTEM_CLASSIC)
+	{
+		if (!(GameButtonsDown[player->num] & BUTTON_DOWN)) {
+			ManualLockUnprotected[player->num] = true;
+		}
+	}
+	else if (player->rotationMode == ROTATIONSYSTEM_WORLD)
+	{
+		if (!(GameButtonsDown[player->num] & BUTTON_UP)) {
+			ManualLockUnprotected[player->num] = true;
+		}
+	}
+	else if (player->rotationMode == ROTATIONSYSTEM_MIXED)
+	{
+		if (!(GameButtonsDown[player->num] & (BUTTON_DOWN | BUTTON_UP))) {
+			ManualLockUnprotected[player->num] = true;
+		}
 	}
 
 	if (
@@ -776,7 +793,7 @@ void UpdatePlayerSelecting(Player* player) {
 		for (int16_t i = 0; i < lengthof(*SelectScales); i++) {
 			SelectScales[player->num][i] = -30 * i;
 		}
-		player->values[2] = (player->rotationSystem == ROTATIONSYSTEM_WORLD) ? 1 : 0;
+		player->values[2] = player->rotationMode;
 		SetMode(player, player->values[0]);
 		SetPal((uint8_t)fieldBorderPalNum, 16u, PAL_NORMALFIELDBORDER);
 		SetPal(15u, 1u, PAL_MODESELECTED);
@@ -812,6 +829,7 @@ void UpdatePlayerSelecting(Player* player) {
 		#define SHOWSELECTROTATIONOPTION(mode, y, modeSelection) ShowText(player->screenPos[0] - TextWidth((mode)) / 2, (y), (mode), player->values[2] == (modeSelection) ? 15u : 14u, false);
 		SHOWSELECTROTATIONOPTION("CLASSIC", 90, 0);
 		SHOWSELECTROTATIONOPTION("WORLD", 105, 1);
+		SHOWSELECTROTATIONOPTION("MIXED", 120, 2);
 		int16_t rotationSelectionOld = player->values[2];
 		ButtonInput selectButtonRotation = Select(player);
 		if (selectButtonRotation & BUTTON_UP) {
@@ -820,15 +838,23 @@ void UpdatePlayerSelecting(Player* player) {
 			}
 		}
 		else if (selectButtonRotation & BUTTON_DOWN) {
-			if (player->values[2] < 1) {
+			if (player->values[2] < 2) {
 				player->values[2]++;
 			}
 		}
-		player->values[2] %= 2;
+		player->values[2] %= 3;
 		if (player->values[2] != rotationSelectionOld) {
 			PlaySoundEffect(SOUNDEFFECT_SELECT);
 		}
-		player->rotationSystem = (player->values[2] == 0) ? ROTATIONSYSTEM_CLASSIC : ROTATIONSYSTEM_WORLD;
+		player->rotationMode = (RotationSystem)player->values[2];
+		if (player->rotationMode != ROTATIONSYSTEM_MIXED) {
+			player->rotationSystem = player->rotationMode;
+			player->nextRotationSystem = player->rotationMode;
+		}
+		else if (player->values[2] != rotationSelectionOld) {
+			player->rotationSystem = Rand(2u) ? ROTATIONSYSTEM_WORLD : ROTATIONSYSTEM_CLASSIC;
+			player->nextRotationSystem = Rand(2u) ? ROTATIONSYSTEM_WORLD : ROTATIONSYSTEM_CLASSIC;
+		}
 		player->blockDefs = player->rotationSystem == ROTATIONSYSTEM_CLASSIC ? ClassicBlockDefs : WorldBlockDefs;
 
 		if (!(GameButtonsNew[player->num] & (BUTTON_3 | BUTTON_2 | BUTTON_1))) {
@@ -1920,7 +1946,12 @@ void LandActiveBlock(Player* player, Fixed32 gravityStep) {
 
 			player->activePos[1].fraction = 0xFFFFu;
 			bool manualLock;
-			if (player->rotationSystem == ROTATIONSYSTEM_CLASSIC) {
+			if (player->rotationMode == ROTATIONSYSTEM_MIXED && gravityStep.integer == 20) {
+				manualLock =
+					(GameButtonsDown[player->num] & BUTTON_ALLDIRECTIONS) == BUTTON_DOWN ||
+					(GameButtonsDown[player->num] & DiagonalUpperwardMask) == BUTTON_UP;
+			}
+			else if (player->rotationSystem == ROTATIONSYSTEM_CLASSIC) {
 				manualLock = (GameButtonsDown[player->num] & BUTTON_ALLDIRECTIONS) == BUTTON_DOWN;
 			}
 			else {
@@ -2109,7 +2140,7 @@ void UpdatePlayActive(Player* player) {
 		NumFastDropRows[player->num]++;
 	}
 	else if ((GameButtonsDown[player->num] & DiagonalUpperwardMask) == BUTTON_UP) {
-		gravity = F32(20, 0x0000);
+		gravity = F32(player->rotationMode == ROTATIONSYSTEM_MIXED && player->gravity.integer < 20 ? 21 : 20, 0x0000);
 		int16_t droppedRows = player->activePos[1].integer - StepGravity(player, gravity).integer;
 		if (droppedRows < 0) {
 			droppedRows = 0;
@@ -2134,6 +2165,7 @@ static inline void WriteBlockToMatrix(Player* const player, const LockType lockT
 			BlockDefSquare* blockDefRow = BLOCKDEFROW(blockDef, lockRotation, blockRow / (lockBlockSize / 4u));
 			for (int16_t blockCol = 0; blockCol < lockBlockSize; blockCol++) {
 				if (BLOCKDEFCOL(blockDefRow, blockCol / (lockBlockSize / 4u)) != DEFBLOCK_EMPTY) {
+					MATRIX(player, matrixRow, lockCol + blockCol).rotationSystem = player->rotationSystem;
 					if (lockType != LOCKTYPE_GAMEOVER) {
 						MATRIX(player, matrixRow, lockCol + blockCol).block = player->activeBlock | BLOCK_FLASH | TOBLOCKFLASHFRAMES(2u);
 					}
@@ -2692,6 +2724,8 @@ void UpdatePlayNext(Player* player) {
 
 	// Generate next block.
 	player->activeBlock = player->nextBlock;
+	player->rotationSystem = player->nextRotationSystem;
+	player->blockDefs = player->rotationSystem == ROTATIONSYSTEM_CLASSIC ? ClassicBlockDefs : WorldBlockDefs;
 	player->activeBlockItemType = player->nextBlockItemType;
 	player->nextBlockItemType = ITEMTYPE_NULL;
 	uint8_t nextBlockNum;
@@ -2720,6 +2754,12 @@ void UpdatePlayNext(Player* player) {
 	}
 	player->history[0] = nextBlockNum;
 	player->nextBlock = (Block)TOBLOCKTYPE(nextBlockNum);
+	if (player->rotationMode == ROTATIONSYSTEM_MIXED) {
+		player->nextRotationSystem = Rand(2u) ? ROTATIONSYSTEM_WORLD : ROTATIONSYSTEM_CLASSIC;
+	}
+	else {
+		player->nextRotationSystem = player->rotationMode;
+	}
 
 	// Item/big mode.
 	if ((player->modeFlags & MODE_BIG) || (player->itemMiscFlags & ITEMMISC_DEATHBLOCK)) {

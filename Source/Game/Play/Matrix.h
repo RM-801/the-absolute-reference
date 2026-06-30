@@ -40,4 +40,5 @@ typedef struct MatrixBlock {
 	int8_t brightness;
 	ItemType itemType;
 	int16_t visibleFrames;
+	uint8_t rotationSystem;
 } MatrixBlock;

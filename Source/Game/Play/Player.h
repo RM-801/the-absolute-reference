@@ -211,7 +211,8 @@ typedef enum Rotation {
 
 typedef enum RotationSystem {
 	ROTATIONSYSTEM_CLASSIC,
-	ROTATIONSYSTEM_WORLD
+	ROTATIONSYSTEM_WORLD,
+	ROTATIONSYSTEM_MIXED
 } RotationSystem;
 #define ENTRY_ROTATION(player) ((player)->rotationSystem == ROTATIONSYSTEM_CLASSIC ? ROTATION_DOWN : ROTATION_UP)
 
@@ -274,7 +275,9 @@ struct Player {
 	Block activeBlock;
 	Block nextBlock;
 	Rotation activeRotation;
+	RotationSystem rotationMode;
 	RotationSystem rotationSystem;
+	RotationSystem nextRotationSystem;
 	const uint8_t* blockDefs;
 	Fixed32 activePos[2];
 	uint8_t history[4];
