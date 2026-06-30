@@ -154,7 +154,7 @@ static void RenderSprites(Color* const framebuffer, const uint8_t* const tileDat
 						const Color* color;
 						if (worldBlockTile) {
 							if (worldBlockBorderPixel) {
-								worldBlockColor = COLOR(0xA0u, 0xA0u, 0xA0u, 0u);
+								worldBlockColor = COLOR(0x80u, 0x80u, 0x80u, 0u);
 							}
 							else {
 								worldBlockColor = WorldBlockPalette[palOffset];
