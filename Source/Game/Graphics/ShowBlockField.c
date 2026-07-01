@@ -357,7 +357,8 @@ void ShowField(Player* player) {
 					palNum = 137u;
 				}
 				ObjectData worldBlockObject;
-				blockObject = WorldBlockObjectForSystem(blockRotationSystem, block, blockBorders, blockObject, &worldBlockObject);
+				const uint8_t worldBorderMask = player->activeItemType == ITEMTYPE_GAMEOVER ? WORLD_BLOCK_RAW_BORDER : blockBorders;
+				blockObject = WorldBlockObjectForSystem(blockRotationSystem, block, worldBorderMask, blockObject, &worldBlockObject);
 				if (!(block & BLOCK_INVISIBLE)) {
 					DisplayObject(blockObject, displayY, displayX, palNum, LAYER_MATRIX);
 				}
@@ -453,7 +454,8 @@ void ShowFieldPlus(Player* player) {
 					srcBlockObject = &OBJECTTABLE_ITEMBLOCKS[TOITEMNUM(MATRIX(player, player->matrixHeight - row - 1, col).itemType)];
 				}
 				ObjectData worldBlockObject;
-				srcBlockObject = WorldBlockObjectForSystem(blockRotationSystem, block, blockBorders, srcBlockObject, &worldBlockObject);
+				const uint8_t worldBorderMask = player->activeItemType == ITEMTYPE_GAMEOVER ? WORLD_BLOCK_RAW_BORDER : blockBorders;
+				srcBlockObject = WorldBlockObjectForSystem(blockRotationSystem, block, worldBorderMask, srcBlockObject, &worldBlockObject);
 				if (block & BLOCK_FLASH) {
 					int16_t flashFrames = GETBLOCKFLASHFRAMES(block);
 					if (flashFrames - 1 == 0) {
