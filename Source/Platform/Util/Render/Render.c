@@ -64,6 +64,27 @@ static uint32_t WorldBlockBrightness(const uint32_t tile, const uint32_t palNum)
 	return fullMax == 0u ? 0xFFu : currentMax * 0xFFu / fullMax;
 }
 
+static uint32_t BoneBlockBrightness(const uint32_t palNum) {
+	static const uint8_t BasePalNums[7] = { 58u, 68u, 78u, 88u, 98u, 108u, 118u };
+	for (size_t blockNum = 0u; blockNum < lengthof(BasePalNums); blockNum++) {
+		const uint8_t basePalNum = BasePalNums[blockNum];
+		if (palNum >= basePalNum && palNum <= basePalNum + 9u) {
+			uint32_t currentMax = 0u;
+			uint32_t fullMax = 0u;
+			for (size_t colorIndex = 1u; colorIndex < NUMPALCOLORS_4BPP; colorIndex++) {
+				const Color current = PALRAM[palNum * NUMPALCOLORS_4BPP + colorIndex];
+				const Color full = PALRAM[(basePalNum + 9u) * NUMPALCOLORS_4BPP + colorIndex];
+				const uint32_t currentValue = COLOR_GETR(current) + COLOR_GETG(current) + COLOR_GETB(current);
+				const uint32_t fullValue = COLOR_GETR(full) + COLOR_GETG(full) + COLOR_GETB(full);
+				if (currentValue > currentMax) currentMax = currentValue;
+				if (fullValue > fullMax) fullMax = fullValue;
+			}
+			return fullMax == 0u ? 0xFFu : currentMax * 0xFFu / fullMax;
+		}
+	}
+	return 0xFFu;
+}
+
 static void RenderSprites(Color* const framebuffer, const uint8_t* const tileData, const uint8_t priority) {
 	if (!(SpriteNames[0] & SPRITENAME_TERMINATE) && !(SpriteNames[1] & SPRITENAME_TERMINATE)) {
 		for (size_t i = SPRITE_FIRST; i < MAXSPRITES; i++) {
@@ -107,7 +128,10 @@ static void RenderSprites(Color* const framebuffer, const uint8_t* const tileDat
 			}
 			const uint32_t tile = OBJECT_GETTILE(sprite);
 			const bool worldBlockTile = bpp == BPP_8 && tile >= WORLD_BLOCK_TILE_BASE && tile < WORLD_BLOCK_TILE_BASE + WORLD_BLOCK_TILE_COUNT;
+			const bool boneBlockTile = bpp == BPP_8 && tile >= BONE_BLOCK_CLASSIC_TILE && tile < BONE_BLOCK_CLASSIC_TILE + BONE_BLOCK_TILE_COUNT;
+			const bool shiraseLabelTile = bpp == BPP_8 && tile >= SHIRASE_LABEL_TILE_BASE && tile < SHIRASE_LABEL_TILE_BASE + SHIRASE_LABEL_TILE_COUNT;
 			const uint32_t worldBlockBrightness = worldBlockTile ? WorldBlockBrightness(tile, palNum) : 0xFFu;
+			const uint32_t boneBlockBrightness = boneBlockTile ? BoneBlockBrightness(palNum) : 0xFFu;
 
 			const int16_t renderW = (((w << 24) / scaleX) + 0x200) >> 10;
 			const int16_t renderH = (((h << 24) / scaleY) + 0x200) >> 10;
@@ -136,8 +160,8 @@ static void RenderSprites(Color* const framebuffer, const uint8_t* const tileDat
 							(tileOffsetY << (3 + bpp))
 						] >> (4 * !(tileOffsetX & 1) * !bpp)
 					) & ((0xF0u * bpp) | 0x0Fu);
-					const uint32_t borderMask = worldBlockTile ? (tile - WORLD_BLOCK_TILE_BASE) % WORLD_BLOCK_BORDER_COUNT : WORLD_BLOCK_RAW_BORDER;
-					const bool worldBlockBorderPixel = worldBlockTile && borderMask != WORLD_BLOCK_RAW_BORDER && (
+					const uint32_t borderMask = worldBlockTile ? (tile - WORLD_BLOCK_TILE_BASE) % WORLD_BLOCK_BORDER_COUNT : boneBlockTile ? (tile - BONE_BLOCK_CLASSIC_TILE) % BONE_BLOCK_BORDER_COUNT : WORLD_BLOCK_RAW_BORDER;
+					const bool blockBorderPixel = worldBlockTile && borderMask != WORLD_BLOCK_RAW_BORDER && (
 						((borderMask & 1u) && tileOffsetY == 0 && tileOffsetX < 8) ||
 						((borderMask & 2u) && tileOffsetY == 7 && tileOffsetX < 8) ||
 						((borderMask & 4u) && tileOffsetX == 0 && tileOffsetY < 8) ||
@@ -145,15 +169,32 @@ static void RenderSprites(Color* const framebuffer, const uint8_t* const tileDat
 					);
 
 					// Skip fully transparent pixels.
-					if (palOffset == 0u && !worldBlockBorderPixel) {
+					if (palOffset == 0u && !blockBorderPixel) {
 						continue;
 					}
 					else {
-						uint32_t blendAlpha = worldBlockBorderPixel ? 0xFFu : ((alpha == PIXELALPHA) ? AlphaTable[palOffset] : alpha) & 0xFFu;
+						uint32_t blendAlpha = blockBorderPixel || boneBlockTile || shiraseLabelTile ? 0xFFu : ((alpha == PIXELALPHA) ? AlphaTable[palOffset] : alpha) & 0xFFu;
 						Color worldBlockColor;
 						const Color* color;
-						if (worldBlockTile) {
-							if (worldBlockBorderPixel) {
+						if (shiraseLabelTile) {
+							const uint32_t brightness = palOffset * 17u;
+							worldBlockColor = COLOR(brightness, brightness * 11u / 16u, 0u, 0u);
+							color = &worldBlockColor;
+						}
+						else if (boneBlockTile) {
+							if (blockBorderPixel) {
+								worldBlockColor = COLOR(0x80u, 0x80u, 0x80u, 0u);
+							}
+							else if (tile < BONE_BLOCK_WORLD_TILE) {
+								worldBlockColor = COLOR(boneBlockBrightness, boneBlockBrightness, boneBlockBrightness, 0u);
+							}
+							else {
+								worldBlockColor = COLOR(0u, 0xFEu * boneBlockBrightness / 0xFFu, 0u, 0u);
+							}
+							color = &worldBlockColor;
+						}
+						else if (worldBlockTile) {
+							if (blockBorderPixel) {
 								worldBlockColor = COLOR(0x80u, 0x80u, 0x80u, 0u);
 							}
 							else {

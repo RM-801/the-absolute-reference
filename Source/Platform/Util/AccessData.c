@@ -5,6 +5,8 @@
 #include "Video/Pal.h"
 #include "Sound/Sound.h"
 #include "Platform/Util/WorldBlockData.h"
+#include "Platform/Util/BoneBlockData.h"
+#include "Platform/Util/ShiraseLabelData.h"
 #include "physfs.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -308,7 +310,7 @@ void CloseProgramData(const uint8_t* const programData) {
 }
 
 bool OpenTileData() {
-	TileData = malloc(TILEDATA_SIZE + WORLD_BLOCK_TILE_COUNT * NUMPALCOLORS_8BPP);
+	TileData = malloc(TILEDATA_SIZE + (WORLD_BLOCK_TILE_COUNT + BONE_BLOCK_TILE_COUNT + SHIRASE_LABEL_TILE_COUNT) * NUMPALCOLORS_8BPP);
 	if (!TileData) {
 		fprintf(stderr, "Failed allocating memory for tile data\n");
 		return false;
@@ -357,6 +359,21 @@ bool OpenTileData() {
 		for (size_t borderMask = 0u; borderMask < WORLD_BLOCK_BORDER_COUNT; borderMask++) {
 			uint8_t* const tile = &worldTiles[(blockNum * WORLD_BLOCK_BORDER_COUNT + borderMask) * NUMPALCOLORS_8BPP];
 			memcpy(tile, WorldBlockTileData[blockNum], NUMPALCOLORS_8BPP);
+		}
+	}
+	uint8_t* const boneTiles = &worldTiles[WORLD_BLOCK_TILE_COUNT * NUMPALCOLORS_8BPP];
+	for (size_t style = 0u; style < 2u; style++) {
+		for (size_t borderMask = 0u; borderMask < BONE_BLOCK_BORDER_COUNT; borderMask++) {
+			memcpy(&boneTiles[(style * BONE_BLOCK_BORDER_COUNT + borderMask) * NUMPALCOLORS_8BPP], BoneBlockTileData, NUMPALCOLORS_8BPP);
+		}
+	}
+	uint8_t* const labelTiles = &boneTiles[BONE_BLOCK_TILE_COUNT * NUMPALCOLORS_8BPP];
+	for (size_t label = 0u; label < 2u; label++) {
+		for (size_t tileX = 0u; tileX < 4u; tileX++) {
+			uint8_t* const tile = &labelTiles[(label * 4u + tileX) * NUMPALCOLORS_8BPP];
+			for (size_t y = 0u; y < 16u; y++) {
+				memcpy(&tile[y * 16u], &ShiraseLabelImages[label][y][tileX * 16u], 16u);
+			}
 		}
 	}
 

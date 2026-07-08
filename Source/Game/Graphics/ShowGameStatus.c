@@ -11,6 +11,7 @@
 #include "Input/Input.h"
 #include "Input/Credit.h"
 #include "Eeprom/Setting.h"
+#include "Platform/Util/AccessData.h"
 
 const ObjectData* ObjectTableStatusDigits[10] = {
 	&OBJECTTABLE_STATUSDIGITS[0],
@@ -25,7 +26,33 @@ const ObjectData* ObjectTableStatusDigits[10] = {
 	&OBJECTTABLE_STATUSDIGITS[9],
 };
 
+static void ShowShiraseLabel(int16_t y, int16_t x, uint8_t label) {
+	ObjectData object;
+	memcpy(&object, &OBJECTTABLE_NORMALBLOCKS[0], sizeof(object));
+	OBJECT_SETW(&object, 3u);
+	OBJECT_SETH(&object, 0u);
+	OBJECT_SETBPP(&object, BPP_8);
+	OBJECT_SETTILE(&object, SHIRASE_LABEL_TILE_BASE + label * 4u);
+	OBJECT_SETPALNUM(&object, 0u);
+	DisplayObjectEx(&object, y, x, 0u, 61u, 0x1Fu, 0x1Fu, false);
+}
+
+static uint16_t ShiraseNextSectionLevel(uint16_t level) {
+	uint16_t nextSectionLevel = ((level / 100u) + 1u) * 100u;
+	if (nextSectionLevel > 1300u) {
+		nextSectionLevel = 1300u;
+	}
+	return nextSectionLevel;
+}
+
 void ShowNextLabel(Player* player, int16_t x) {
+	if (player->modeFlags & MODE_TGMPLUS) {
+		const int16_t nextX = player->screenPos[0] + player->screenOffset[0] + ENTRY_SINGLECOL * 8 - (player->matrixWidth / 2) * 8;
+		const int16_t nextY = player->screenPos[1] + player->screenOffset[1] - (player->matrixHeight + 3) * 8;
+		ShowShiraseLabel(nextY - 6, nextX - 40, 0u);
+		ShowShiraseLabel(nextY - 6, nextX, 1u);
+		return;
+	}
 	if (player->modeFlags & MODE_ITEM) {
 		player->nextScale.value += player->nextScaleV.value;
 		if (player->nextScale.value < F16V(0, 0x00)) {
@@ -122,8 +149,9 @@ static const ObjectData* ObjectTableGravityBars[21] = {
 };
 
 void ShowLevel(Player* player, int16_t nextSectionLevel, int16_t y, int16_t x, uint8_t palNum) {
-	ShowStatusNumEx(player->level, y, x, palNum, LAYER_GAMESTATUS, 3, false, NUMALIGN_RIGHT);
-	ShowStatusNumEx(nextSectionLevel, y + 15, x, palNum, LAYER_GAMESTATUS, 3, false, NUMALIGN_RIGHT);
+	const int16_t numDigits = (player->modeFlags & MODE_TGMPLUS) && (player->level >= 1000u || nextSectionLevel >= 1000) ? 4 : 3;
+	ShowStatusNumEx(player->level, y, x, palNum, LAYER_GAMESTATUS, numDigits, false, NUMALIGN_RIGHT);
+	ShowStatusNumEx(nextSectionLevel, y + 15, x, palNum, LAYER_GAMESTATUS, numDigits, false, NUMALIGN_RIGHT);
 
 	size_t gravityBarWidth = player->gravity.value >> 15;
 	if (gravityBarWidth > 20u) {
@@ -653,7 +681,7 @@ void ShowChallengerMode(Player* player) {
 	} while (false)
 	SHOWMODE(MODE_NORMAL, "NORMAL");
 	SHOWMODE(MODE_MASTER, "MASTER");
-	SHOWMODE(MODE_TGMPLUS, "TGM+");
+	SHOWMODE(MODE_TGMPLUS, "SHIRASE");
 	SHOWMODE(MODE_TADEATH, "T.A. DEATH");
 
 	ModeFlag modeCodeFlags = player->otherPlayer->modeFlags;
@@ -703,8 +731,12 @@ void ShowPlayersStatus() {
 	Player* player;
 
 	if (GameFlags & (GAME_TWIN | GAME_VERSUS)) {
-		DisplayObjectEx(OBJECT_SINGLENEXTBLOCKBG, 12, Players[PLAYER1].screenPos[0] - 44, PALNUM_NEXTBLOCKBG, 60u, UNSCALED, UNSCALED, true);
-		DisplayObjectEx(OBJECT_SINGLENEXTBLOCKBG, 12, Players[PLAYER2].screenPos[0] - 44, PALNUM_NEXTBLOCKBG, 60u, UNSCALED, UNSCALED, true);
+		for (PlayerNum playerNum = PLAYER1; playerNum < NUMPLAYERS; playerNum++) {
+			const bool shirase = Players[playerNum].modeFlags & MODE_TGMPLUS;
+			const int16_t x = Players[playerNum].screenPos[0] - (shirase ? 92 : 44);
+			const SpriteScale scaleX = shirase ? 0x8Fu : UNSCALED;
+			DisplayObjectEx(OBJECT_SINGLENEXTBLOCKBG, 12, x, PALNUM_NEXTBLOCKBG, 60u, UNSCALED, scaleX, true);
+		}
 	}
 	else if (GameFlags & GAME_DOUBLES) {
 		DisplayObjectEx(OBJECT_DOUBLESNEXTBLOCKBG, 12, 98, PALNUM_NEXTBLOCKBG, 60u, UNSCALED, UNSCALED, true);
@@ -754,7 +786,7 @@ void ShowPlayersStatus() {
 
 			ShowStatusNumEx(player->score, 145, player->num == PLAYER1 ? 108 : 268, *progressPalNum, 40u, 6, false, NUMALIGN_CENTER);
 			if (player->modeFlags & (MODE_MASTER | MODE_TGMPLUS | MODE_TADEATH)) {
-				ShowLevel(player, NextSectionLevels[player->section], levelY + 13, playerNum == PLAYER1 ? 108 : 268, *progressPalNum);
+					ShowLevel(player, player->modeFlags & MODE_TGMPLUS ? ShiraseNextSectionLevel(player->level) : NextSectionLevels[player->section], levelY + 13, playerNum == PLAYER1 ? 108 : 268, *progressPalNum);
 			}
 			else {
 				ShowLevel(player, NextSectionLevels[2], levelY + 13, playerNum == PLAYER1 ? 108 : 268, *progressPalNum);

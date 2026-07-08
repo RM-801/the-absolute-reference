@@ -10,6 +10,7 @@
 #include <stdbool.h>
 
 KeySetting InputConfigKeyboard[NUMINPUTS][8];
+KeySetting InputButton4Keyboard[NUMPLAYERS];
 
 KeySetting InputApplicationKeyboardQuit;
 
@@ -78,6 +79,7 @@ const char* const DefaultConfig =
 "BUTTON_3 = ;\n"
 "BUTTON_2 = L\n"
 "BUTTON_1 = K\n"
+"BUTTON_4 = Space\n"
 "BUTTON_LEFT = A\n"
 "BUTTON_RIGHT = D\n"
 "BUTTON_DOWN = S\n"
@@ -88,6 +90,7 @@ const char* const DefaultConfig =
 "BUTTON_3 = Keypad 3\n"
 "BUTTON_2 = Keypad 2\n"
 "BUTTON_1 = Keypad 1\n"
+"BUTTON_4 = Keypad 0\n"
 "BUTTON_LEFT = Keypad 4\n"
 "BUTTON_RIGHT = Keypad 6\n"
 "BUTTON_DOWN = Keypad 5\n"
@@ -359,6 +362,10 @@ bool OpenConfig() {
 		GET_KEY(INPUT_BUTTONS2P, BUTTON_RIGHT, 5);
 		GET_KEY(INPUT_BUTTONS2P, BUTTON_DOWN, 6);
 		GET_KEY(INPUT_BUTTONS2P, BUTTON_UP, 7);
+		const char* button4 = ini_get(config, "INPUT_BUTTONS1P_KEYBOARD", "BUTTON_4");
+		InputButton4Keyboard[PLAYER1] = button4 ? GetKeySetting(button4) : (KeySetting){ KMOD_NONE, SDLK_SPACE };
+		button4 = ini_get(config, "INPUT_BUTTONS2P_KEYBOARD", "BUTTON_4");
+		InputButton4Keyboard[PLAYER2] = button4 ? GetKeySetting(button4) : (KeySetting){ KMOD_NONE, SDLK_KP_0 };
 
 		GET_KEY(INPUT_SERVICE, SERVICE_COIN1, 0);
 		GET_KEY(INPUT_SERVICE, SERVICE_COIN2, 1);

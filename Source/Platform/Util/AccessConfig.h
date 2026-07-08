@@ -14,6 +14,7 @@ typedef struct KeySetting {
 } KeySetting;
 
 extern KeySetting InputConfigKeyboard[NUMINPUTS][8];
+extern KeySetting InputButton4Keyboard[NUMPLAYERS];
 
 extern KeySetting InputApplicationKeyboardQuit;
 

@@ -24,11 +24,20 @@ uint16_t BlockPalNum(const Player* player, uint8_t blockNum) {
 	return BlockPalNumForSystem(player->rotationSystem, blockNum);
 }
 
-static const ObjectData* WorldBlockObjectForSystem(RotationSystem rotationSystem, Block block, uint8_t borderMask, const ObjectData* source, ObjectData* destination) {
-	if (rotationSystem != ROTATIONSYSTEM_WORLD || (block & (BLOCK_HARD | BLOCK_ITEM | BLOCK_ROLLROLL | BLOCK_TRANSFORM))) {
+static const ObjectData* WorldBlockObjectForSystem(const Player* player, RotationSystem rotationSystem, Block block, uint8_t borderMask, const ObjectData* source, ObjectData* destination) {
+	if (block & (BLOCK_HARD | BLOCK_ITEM | BLOCK_ROLLROLL | BLOCK_TRANSFORM)) {
 		return source;
 	}
 	memcpy(destination, &OBJECTTABLE_NORMALBLOCKS[0], sizeof(*destination));
+	if ((player->modeFlags & MODE_TGMPLUS) && player->level >= SHIRASE_BONE_LEVEL && player->level < 1300u) {
+		OBJECT_SETBPP(destination, BPP_8);
+		OBJECT_SETTILE(destination, (rotationSystem == ROTATIONSYSTEM_CLASSIC ? BONE_BLOCK_CLASSIC_TILE : BONE_BLOCK_WORLD_TILE) + borderMask);
+		OBJECT_SETPALNUM(destination, 0u);
+		return destination;
+	}
+	if (rotationSystem != ROTATIONSYSTEM_WORLD) {
+		return source;
+	}
 	OBJECT_SETBPP(destination, BPP_8);
 	const uint8_t tileIndex = block & BLOCK_FLASH ? 7u : TOBLOCKNUM(block & BLOCK_TYPE);
 	OBJECT_SETTILE(destination, WORLD_BLOCK_TILE_BASE + tileIndex * WORLD_BLOCK_BORDER_COUNT + borderMask);
@@ -41,7 +50,7 @@ static RotationSystem MatrixBlockRotationSystem(const Player* player, const Matr
 }
 
 const ObjectData* WorldBlockObject(const Player* player, Block block, uint8_t borderMask, const ObjectData* source, ObjectData* destination) {
-	return WorldBlockObjectForSystem(player->rotationSystem, block, borderMask, source, destination);
+	return WorldBlockObjectForSystem(player, player->rotationSystem, block, borderMask, source, destination);
 }
 const uint16_t PalNumTableItemBlocks[NUMITEMTYPES] = { 226u, 226u, 226u, 236u, 236u, 236u, 236u, 236u, 226u, 226u, 226u, 226u, 226u, 226u, 246u, 226u, 246u, 226u, 226u };
 const Color* PalTableItemFieldBorder[NUMITEMTYPES] = {
@@ -76,7 +85,7 @@ void SetFieldBorderColor(Player* player, ItemType itemType) {
 		SetPal(palNum, 16u, PAL_DOUBLESFIELDBORDER);
 	}
 	else if (player->modeFlags & MODE_TGMPLUS) {
-		SetPal(palNum, 16u, PAL_BLUEFIELDBORDER);
+		SetPal(palNum, 16u, PAL_REDFIELDBORDER);
 	}
 	else if (player->modeFlags & MODE_TADEATH) {
 		SetPal(palNum, 16u, PAL_REDFIELDBORDER);
@@ -97,9 +106,13 @@ void ShowBlock(Player* player, ShowBlockType showBlockType, bool show) {
 		int16_t startY, startX;
 		int16_t palNum;
 
-		if (showBlockType == SHOWBLOCKTYPE_NEXT) {
+		const bool nextPreview = showBlockType == SHOWBLOCKTYPE_NEXT || showBlockType == SHOWBLOCKTYPE_NEXT2 || showBlockType == SHOWBLOCKTYPE_NEXT3;
+		const bool holdPreview = showBlockType == SHOWBLOCKTYPE_HOLD;
+		if (nextPreview || holdPreview) {
 			const bool blockedEntry = player->play.state == PLAYSTATE_BLOCKEDENTRY;
-			block = blockedEntry ? player->activeBlock : player->nextBlock;
+			const size_t nextIndex = nextPreview ? (size_t)(showBlockType - SHOWBLOCKTYPE_NEXT) : 0u;
+			block = holdPreview ? player->holdBlock : blockedEntry ? player->activeBlock : nextIndex == 0u ? player->nextBlock : player->shiraseNextBlocks[nextIndex - 1u];
+			const RotationSystem nextRotationSystem = holdPreview ? player->holdRotationSystem : nextIndex == 0u ? player->nextRotationSystem : player->shiraseNextRotationSystems[nextIndex - 1u];
 			if ((GameFlags & GAME_VERSUS) && player->play.state == PLAYSTATE_START) {
 				rotation = player->activeRotation;
 			}
@@ -107,7 +120,7 @@ void ShowBlock(Player* player, ShowBlockType showBlockType, bool show) {
 				rotation = player->activeRotation;
 			}
 			else {
-				rotation = player->nextRotationSystem == ROTATIONSYSTEM_CLASSIC ? ROTATION_DOWN : ROTATION_UP;
+				rotation = nextRotationSystem == ROTATIONSYSTEM_CLASSIC ? ROTATION_DOWN : ROTATION_UP;
 			}
 
 			int16_t col;
@@ -126,6 +139,12 @@ void ShowBlock(Player* player, ShowBlockType showBlockType, bool show) {
 
 			startX = player->screenPos[0] + player->screenOffset[0] + col * 8 - (player->matrixWidth / 2) * 8;
 			startY = player->screenPos[1] + player->screenOffset[1] - (player->matrixHeight + 3) * 8 - startY;
+			if (nextIndex > 0u) {
+				startX += (int16_t)nextIndex * 36;
+			}
+			else if (holdPreview) {
+				startX -= 40;
+			}
 			palNum = 9;
 		}
 		else {
@@ -169,19 +188,21 @@ void ShowBlock(Player* player, ShowBlockType showBlockType, bool show) {
 			blockObject = OBJECT_HARDBLOCK;
 		}
 		else if (block & BLOCK_ITEM) {
-			uint8_t itemNum = showBlockType == SHOWBLOCKTYPE_NEXT ? TOITEMNUM(player->nextBlockItemType) : TOITEMNUM(player->activeBlockItemType);
+			uint8_t itemNum = nextPreview ? TOITEMNUM(player->nextBlockItemType) : TOITEMNUM(player->activeBlockItemType);
 			blockObject = &OBJECTTABLE_ITEMBLOCKS[itemNum];
 		}
 		else {
 			blockObject = &OBJECTTABLE_NORMALBLOCKS[0];
 		}
-		const RotationSystem blockRotationSystem = showBlockType == SHOWBLOCKTYPE_NEXT && player->play.state != PLAYSTATE_BLOCKEDENTRY ? player->nextRotationSystem : player->rotationSystem;
+		const size_t nextIndex = nextPreview ? (size_t)(showBlockType - SHOWBLOCKTYPE_NEXT) : 0u;
+		const RotationSystem previewRotationSystem = holdPreview ? player->holdRotationSystem : nextIndex == 0u ? player->nextRotationSystem : player->shiraseNextRotationSystems[nextIndex - 1u];
+		const RotationSystem blockRotationSystem = (nextPreview || holdPreview) && player->play.state != PLAYSTATE_BLOCKEDENTRY ? previewRotationSystem : player->rotationSystem;
 		ObjectData worldBlockObject;
-		blockObject = (ObjectData*)WorldBlockObjectForSystem(blockRotationSystem, block, WORLD_BLOCK_RAW_BORDER, blockObject, &worldBlockObject);
+		blockObject = (ObjectData*)WorldBlockObjectForSystem(player, blockRotationSystem, block, WORLD_BLOCK_RAW_BORDER, blockObject, &worldBlockObject);
 
 		int16_t palOffset;
 		if (block & BLOCK_ITEM) {
-			uint8_t itemNum = showBlockType == SHOWBLOCKTYPE_NEXT ? TOITEMNUM(player->nextBlockItemType) : TOITEMNUM(player->activeBlockItemType);
+			uint8_t itemNum = nextPreview ? TOITEMNUM(player->nextBlockItemType) : TOITEMNUM(player->activeBlockItemType);
 			palOffset = PalNumTableItemBlocks[itemNum];
 		}
 		else if (block & BLOCK_ROLLROLL) {
@@ -358,7 +379,7 @@ void ShowField(Player* player) {
 				}
 				ObjectData worldBlockObject;
 				const uint8_t worldBorderMask = player->activeItemType == ITEMTYPE_GAMEOVER ? WORLD_BLOCK_RAW_BORDER : blockBorders;
-				blockObject = WorldBlockObjectForSystem(blockRotationSystem, block, worldBorderMask, blockObject, &worldBlockObject);
+				blockObject = WorldBlockObjectForSystem(player, blockRotationSystem, block, worldBorderMask, blockObject, &worldBlockObject);
 				if (!(block & BLOCK_INVISIBLE)) {
 					DisplayObject(blockObject, displayY, displayX, palNum, LAYER_MATRIX);
 				}
@@ -455,7 +476,7 @@ void ShowFieldPlus(Player* player) {
 				}
 				ObjectData worldBlockObject;
 				const uint8_t worldBorderMask = player->activeItemType == ITEMTYPE_GAMEOVER ? WORLD_BLOCK_RAW_BORDER : blockBorders;
-				srcBlockObject = WorldBlockObjectForSystem(blockRotationSystem, block, worldBorderMask, srcBlockObject, &worldBlockObject);
+				srcBlockObject = WorldBlockObjectForSystem(player, blockRotationSystem, block, worldBorderMask, srcBlockObject, &worldBlockObject);
 				if (block & BLOCK_FLASH) {
 					int16_t flashFrames = GETBLOCKFLASHFRAMES(block);
 					if (flashFrames - 1 == 0) {

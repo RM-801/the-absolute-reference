@@ -98,8 +98,8 @@ void UpdateInputs() {
 	UNK_6064756[0] = (~INPUTS[INPUT_UNUSED] >> 4) & 0xF;
 	UNK_6064756[1] = ~INPUTS[INPUT_UNUSED] & 0xF;
 
-	SystemButtonsDown[PLAYER1] = ~INPUTS[INPUT_BUTTONS1P];
-	SystemButtonsDown[PLAYER2] = ~INPUTS[INPUT_BUTTONS2P];
+	SystemButtonsDown[PLAYER1] = (uint8_t)~INPUTS[INPUT_BUTTONS1P] | PlatformExtraButtonsDown[PLAYER1];
+	SystemButtonsDown[PLAYER2] = (uint8_t)~INPUTS[INPUT_BUTTONS2P] | PlatformExtraButtonsDown[PLAYER2];
 
 	uint8_t serviceInput = ~INPUTS[INPUT_SERVICE];
 
@@ -131,8 +131,8 @@ void UpdateInputs() {
 		GameButtonsOld[PLAYER1] = GameButtonsDown[PLAYER1];
 		GameButtonsOld[PLAYER2] = GameButtonsDown[PLAYER2];
 
-		GameButtonsDown[PLAYER1] = ~INPUTS[INPUT_BUTTONS1P];
-		GameButtonsDown[PLAYER2] = ~INPUTS[INPUT_BUTTONS2P];
+		GameButtonsDown[PLAYER1] = (uint8_t)~INPUTS[INPUT_BUTTONS1P] | PlatformExtraButtonsDown[PLAYER1];
+		GameButtonsDown[PLAYER2] = (uint8_t)~INPUTS[INPUT_BUTTONS2P] | PlatformExtraButtonsDown[PLAYER2];
 
 		GameButtonsNew[PLAYER1] = GameButtonsDown[PLAYER1] & ~GameButtonsOld[PLAYER1];
 		GameButtonsNew[PLAYER2] = GameButtonsDown[PLAYER2] & ~GameButtonsOld[PLAYER2];

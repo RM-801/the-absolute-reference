@@ -44,6 +44,16 @@ static GameLoopState GameLoop;
 
 static GameLoopState StartGameLoop();
 
+static const char* GameVersionName() {
+	for (PlayerNum playerNum = PLAYER1; playerNum < NUMPLAYERS; playerNum++) {
+		Player* player = &Players[playerNum];
+		if ((player->nowFlags & NOW_STARTED) && !(player->modeFlags & MODE_TGMPLUS) && player->rotationMode == ROTATIONSYSTEM_CLASSIC) {
+			return "PLUS";
+		}
+	}
+	return VERSION_NAME;
+}
+
 void InitGame() {
 	UNK_602AA4C();
 	UNK_6029814(0u, 0u, 0u, 0xFFu);
@@ -536,7 +546,7 @@ static GameLoopState StartGameLoop() {
 		}
 
 		UpdateGameMusic();
-		ShowPalCycleText(218 + 67, 218, VERSION_NAME, true);
+		ShowPalCycleText(218 + 67, 218, GameVersionName(), true);
 		if ((++numPalCycleFrames % 64u) == 0u) {
 			if ((downNextPalCycle = !downNextPalCycle)) {
 				NewPalCycle(PALNUM_PALCYCLETEXT, PalCycleTextPal0, PAL_SYSTEMTEXT, 1, PALCYCLETYPE_DOWNSTOP, 1u, 63u);

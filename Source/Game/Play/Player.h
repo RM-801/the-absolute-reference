@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Game/Play/Block.h"
+
+#define SHIRASE_BONE_LEVEL 1000u
 #include "Game/Play/Matrix.h"
 #include "Game/Play/Medal.h"
 #include "Game/Play/RankingCode.h"
@@ -274,10 +276,16 @@ struct Player {
 	PlayData play;
 	Block activeBlock;
 	Block nextBlock;
+	Block shiraseNextBlocks[2];
+	Block holdBlock;
 	Rotation activeRotation;
 	RotationSystem rotationMode;
 	RotationSystem rotationSystem;
 	RotationSystem nextRotationSystem;
+	RotationSystem shiraseNextRotationSystems[2];
+	RotationSystem holdRotationSystem;
+	bool shiraseNextQueueReady;
+	bool holdUsed;
 	const uint8_t* blockDefs;
 	Fixed32 activePos[2];
 	uint8_t history[4];
@@ -310,6 +318,7 @@ struct Player {
 	char rankingCode[NUMRANKINGCODEDIGITS];
 	uint8_t moveResetTimes;
 	uint8_t rotationResetTimes;
+	uint8_t shiraseFloorKicks;
 	bool landingFlag;
 };
 

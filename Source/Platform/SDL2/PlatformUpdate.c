@@ -33,6 +33,9 @@ void PlatformUpdateInputs() {
 
 	const Uint8* const keyboardState = SDL_GetKeyboardState(NULL);
 	SDL_Keymod modState = SDL_GetModState() & ~(KMOD_NUM | KMOD_CAPS);
+	for (PlayerNum playerNum = PLAYER1; playerNum < NUMPLAYERS; playerNum++) {
+		PlatformExtraButtonsDown[playerNum] = KeyWithModsPressed(InputButton4Keyboard[playerNum], keyboardState, modState) ? BUTTON_4 : BUTTON_NONE;
+	}
 	for (size_t i = 0u; i < NUMINPUTS; i++) {
 		for (size_t j = 0u; j < 8u; j++) {
 			if (KeyWithModsPressed(InputConfigKeyboard[i][j], keyboardState, modState)) {
