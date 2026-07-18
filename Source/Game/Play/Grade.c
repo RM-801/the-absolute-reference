@@ -211,7 +211,7 @@ void CheckDecayGrade(Player* player) {
 }
 
 void UpdatePlayerGrade(Player* player) {
-	if (!(player->nowFlags & NOW_STAFF) && !(player->modeFlags & (MODE_TGMPLUS | MODE_TADEATH))) {
+	if (!(player->nowFlags & NOW_STAFF) && !(player->modeFlags & (MODE_SHIRASE | MODE_TADEATH))) {
 		while (Grades[player->num].currentGrade.integer > GradeLevels[player->grade] && player->grade < PLAYERGRADE_S9) {
 			player->grade++;
 			player->masteringTime = player->clearTime;

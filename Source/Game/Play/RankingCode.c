@@ -174,8 +174,8 @@ void NewRankingCode(Player *player) {
 	if (player->modeFlags & MODE_TADEATH) {
 		selection = MODESELECTION_TADEATH;
 	}
-	if (player->modeFlags & MODE_TGMPLUS) {
-		selection = MODESELECTION_TGMPLUS;
+	if (player->modeFlags & MODE_SHIRASE) {
+		selection = MODESELECTION_SHIRASE;
 	}
 	if (player->modeFlags & MODE_MASTER) {
 		selection = MODESELECTION_MASTER;

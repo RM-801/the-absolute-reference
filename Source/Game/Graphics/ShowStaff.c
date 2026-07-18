@@ -20,7 +20,7 @@ static void UpdateEntityGrandMasterCongratulations(Entity* entity);
 static void ShowRetryForGrandMaster(Player* player);
 static void UpdateEntityRetryForGrandMaster(Entity* entity);
 static void UpdateEntityNormalComplete(Entity* entity);
-static void UpdateEntityTgmPlusComplete(Entity* entity);
+static void UpdateEntityShiraseComplete(Entity* entity);
 static void UpdateEntityDoublesComplete(Entity* entity);
 static void UpdateStaffFireworks(Entity* entity, Player* player, uint16_t delay);
 static void UpdateEntityDeathComplete(Entity* entity);
@@ -322,8 +322,8 @@ static void UpdateEntityStaff(Entity* entity) {
 						UpdateEntityDeathIncomplete(entity);
 					}
 				}
-				else if (player->modeFlags & MODE_TGMPLUS) {
-					UpdateEntityTgmPlusComplete(entity);
+				else if (player->modeFlags & MODE_SHIRASE) {
+					UpdateEntityShiraseComplete(entity);
 				}
 				else if (player->modeFlags & MODE_NORMAL) {
 					UpdateEntityNormalComplete(entity);
@@ -459,7 +459,7 @@ static void UpdateEntityNormalComplete(Entity* entity) {
 	DisplayObject(OBJECTPTR(0x2F9), 120, player->screenPos[0], 0u, 125u);
 }
 
-static void UpdateEntityTgmPlusComplete(Entity* entity) {
+static void UpdateEntityShiraseComplete(Entity* entity) {
 	Player* player = entity->data.unionData.player;
 
 	player->nowFlags |= NOW_NOUPDATE;

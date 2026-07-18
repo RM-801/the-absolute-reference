@@ -46,7 +46,7 @@ static uint16_t ShiraseNextSectionLevel(uint16_t level) {
 }
 
 void ShowNextLabel(Player* player, int16_t x) {
-	if (player->modeFlags & MODE_TGMPLUS) {
+	if (player->modeFlags & MODE_SHIRASE) {
 		const int16_t nextX = player->screenPos[0] + player->screenOffset[0] + ENTRY_SINGLECOL * 8 - (player->matrixWidth / 2) * 8;
 		const int16_t nextY = player->screenPos[1] + player->screenOffset[1] - (player->matrixHeight + 3) * 8;
 		ShowShiraseLabel(nextY - 6, nextX - 40, 0u);
@@ -149,7 +149,7 @@ static const ObjectData* ObjectTableGravityBars[21] = {
 };
 
 void ShowLevel(Player* player, int16_t nextSectionLevel, int16_t y, int16_t x, uint8_t palNum) {
-	const int16_t numDigits = (player->modeFlags & MODE_TGMPLUS) && (player->level >= 1000u || nextSectionLevel >= 1000) ? 4 : 3;
+	const int16_t numDigits = (player->modeFlags & MODE_SHIRASE) && (player->level >= 1000u || nextSectionLevel >= 1000) ? 4 : 3;
 	ShowStatusNumEx(player->level, y, x, palNum, LAYER_GAMESTATUS, numDigits, false, NUMALIGN_RIGHT);
 	ShowStatusNumEx(nextSectionLevel, y + 15, x, palNum, LAYER_GAMESTATUS, numDigits, false, NUMALIGN_RIGHT);
 
@@ -651,7 +651,7 @@ void ShowModeCodes(Player* player) {
 
 	if (!(player->modeFlags & MODE_DOUBLES)) {
 		ModeFlag modeCodeFlags = player->modeFlags;
-		if ((player->modeFlags & MODE_TGMPLUS) && !(player->nowFlags & NOW_ABSENT)) {
+		if ((player->modeFlags & MODE_SHIRASE) && !(player->nowFlags & NOW_ABSENT)) {
 			modeCodeFlags &= ~MODE_BIG;
 		}
 
@@ -681,11 +681,11 @@ void ShowChallengerMode(Player* player) {
 	} while (false)
 	SHOWMODE(MODE_NORMAL, "NORMAL");
 	SHOWMODE(MODE_MASTER, "MASTER");
-	SHOWMODE(MODE_TGMPLUS, "SHIRASE");
+	SHOWMODE(MODE_SHIRASE, "SHIRASE");
 	SHOWMODE(MODE_TADEATH, "T.A. DEATH");
 
 	ModeFlag modeCodeFlags = player->otherPlayer->modeFlags;
-	if ((player->otherPlayer->modeFlags & MODE_TGMPLUS) && !(player->otherPlayer->nowFlags & NOW_ABSENT)) {
+	if ((player->otherPlayer->modeFlags & MODE_SHIRASE) && !(player->otherPlayer->nowFlags & NOW_ABSENT)) {
 		modeCodeFlags &= ~(MODE_BIG | MODE_ITEM);
 	}
 
@@ -732,7 +732,7 @@ void ShowPlayersStatus() {
 
 	if (GameFlags & (GAME_TWIN | GAME_VERSUS)) {
 		for (PlayerNum playerNum = PLAYER1; playerNum < NUMPLAYERS; playerNum++) {
-			const bool shirase = Players[playerNum].modeFlags & MODE_TGMPLUS;
+			const bool shirase = Players[playerNum].modeFlags & MODE_SHIRASE;
 			const int16_t x = Players[playerNum].screenPos[0] - (shirase ? 92 : 44);
 			const SpriteScale scaleX = shirase ? 0x8Fu : UNSCALED;
 			DisplayObjectEx(OBJECT_SINGLENEXTBLOCKBG, 12, x, PALNUM_NEXTBLOCKBG, 60u, UNSCALED, scaleX, true);
@@ -785,8 +785,8 @@ void ShowPlayersStatus() {
 			}
 
 			ShowStatusNumEx(player->score, 145, player->num == PLAYER1 ? 108 : 268, *progressPalNum, 40u, 6, false, NUMALIGN_CENTER);
-			if (player->modeFlags & (MODE_MASTER | MODE_TGMPLUS | MODE_TADEATH)) {
-					ShowLevel(player, player->modeFlags & MODE_TGMPLUS ? ShiraseNextSectionLevel(player->level) : NextSectionLevels[player->section], levelY + 13, playerNum == PLAYER1 ? 108 : 268, *progressPalNum);
+			if (player->modeFlags & (MODE_MASTER | MODE_SHIRASE | MODE_TADEATH)) {
+					ShowLevel(player, player->modeFlags & MODE_SHIRASE ? ShiraseNextSectionLevel(player->level) : NextSectionLevels[player->section], levelY + 13, playerNum == PLAYER1 ? 108 : 268, *progressPalNum);
 			}
 			else {
 				ShowLevel(player, NextSectionLevels[2], levelY + 13, playerNum == PLAYER1 ? 108 : 268, *progressPalNum);

@@ -101,14 +101,14 @@ typedef enum ModeFlag {
 	MODE_INVISIBLE = 1 << 4,
 	MODE_20G = 1 << 5,
 	MODE_BIG = 1 << 6,
-	MODE_TGMPLUS = 1 << 7,
+	MODE_SHIRASE = 1 << 7,
 	MODE_CEMENT = 1 << 8,
 	MODE_ITEM = 1 << 9,
 	MODE_TLS = 1 << 10,
 	MODE_NOITEM = 1 << 11,
 	MODE_TADEATH = 1 << 12,
 	MODE_TIMEOUT = 1 << 13,
-	MODE_SELECTIONS = MODE_NORMAL | MODE_MASTER | MODE_TGMPLUS | MODE_TADEATH | MODE_DOUBLES | MODE_VERSUS
+	MODE_SELECTIONS = MODE_NORMAL | MODE_MASTER | MODE_SHIRASE | MODE_TADEATH | MODE_DOUBLES | MODE_VERSUS
 } ModeFlag;
 
 // Selectable modes. Versus isn't considered a mode on its own the way normal,
@@ -116,7 +116,7 @@ typedef enum ModeFlag {
 typedef enum ModeSelection {
 	MODESELECTION_NORMAL,
 	MODESELECTION_MASTER,
-	MODESELECTION_TGMPLUS,
+	MODESELECTION_SHIRASE,
 	MODESELECTION_TADEATH,
 	MODESELECTION_DOUBLES,
 	NUMMODESELECTIONS,
@@ -307,8 +307,8 @@ struct Player {
 	uint16_t numRotations;
 	uint16_t numRotateBlocks;
 	uint16_t numActiveRotations;
-	uint8_t numTgmPlusBlocks;
-	uint8_t tgmPlusGarbageIndex;
+	uint8_t numShiraseBlocks;
+	uint8_t ShiraseGarbageIndex;
 	bool refusingChallenges;
 	int16_t numActiveFrames;
 	uint8_t numMGradeLines;

@@ -1194,7 +1194,7 @@ bool UpdatePlayRanking(Player* player) {
 
 static void ShowPlayRanking(NewRankingData* newRanking, EntryFlash entryFlash) {
 	Player* player = newRanking->player;
-	if ((player->modeFlags & (MODE_NORMAL | MODE_MASTER | MODE_TGMPLUS | MODE_TADEATH)) && !newRanking->flags) {
+	if ((player->modeFlags & (MODE_NORMAL | MODE_MASTER | MODE_SHIRASE | MODE_TADEATH)) && !newRanking->flags) {
 		ShowPlayRankingCodeNameEntry(newRanking, entryFlash);
 	}
 	else {

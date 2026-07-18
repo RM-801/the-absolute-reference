@@ -84,7 +84,7 @@ void SetFieldBorderColor(Player* player, ItemType itemType) {
 	else if (GameFlags & GAME_DOUBLES) {
 		SetPal(palNum, 16u, PAL_DOUBLESFIELDBORDER);
 	}
-	else if (player->modeFlags & MODE_TGMPLUS) {
+	else if (player->modeFlags & MODE_SHIRASE) {
 		SetPal(palNum, 16u, PAL_REDFIELDBORDER);
 	}
 	else if (player->modeFlags & MODE_TADEATH) {
@@ -409,7 +409,7 @@ void ShowFieldPlus(Player* player) {
 	}
 	else {
 		fieldBorderObject = OBJECT_NORMALFIELDBORDER;
-		if (!(player->modeFlags & MODE_TADEATH) && (player->modeFlags & (MODE_MASTER | MODE_VERSUS | MODE_TGMPLUS))) {
+		if (!(player->modeFlags & MODE_TADEATH) && (player->modeFlags & (MODE_MASTER | MODE_VERSUS | MODE_SHIRASE))) {
 			fieldBorderObject = OBJECT_MASTERFIELDBORDER;
 		}
 		if ((player->nowFlags & NOW_SELECTING) && (player->modeFlags & MODE_DOUBLES)) {

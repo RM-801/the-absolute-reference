@@ -47,7 +47,7 @@ static GameLoopState StartGameLoop();
 static const char* GameVersionName() {
 	for (PlayerNum playerNum = PLAYER1; playerNum < NUMPLAYERS; playerNum++) {
 		Player* player = &Players[playerNum];
-		if ((player->nowFlags & NOW_STARTED) && !(player->modeFlags & MODE_TGMPLUS) && player->rotationMode == ROTATIONSYSTEM_CLASSIC) {
+		if ((player->nowFlags & NOW_STARTED) && !(player->modeFlags & MODE_SHIRASE) && player->rotationMode == ROTATIONSYSTEM_CLASSIC) {
 			return "PLUS";
 		}
 	}
@@ -262,7 +262,7 @@ uint8_t NumVersusRoundsSetting() {
 GameLoopState UNK_6008406(PlayerNum playerNum) {
 	NextPlayGameOver(&Players[playerNum]);
 
-	Players[playerNum].modeFlags &= MODE_NORMAL | MODE_MASTER | MODE_TGMPLUS | MODE_TADEATH;
+	Players[playerNum].modeFlags &= MODE_NORMAL | MODE_MASTER | MODE_SHIRASE | MODE_TADEATH;
 	Players[PLAYER1].modeFlags &= ~MODE_VERSUS;
 	Players[PLAYER2].modeFlags &= ~MODE_VERSUS;
 
@@ -717,7 +717,7 @@ void UpdateGameMusic() {
 		else if (!(Players[PLAYER1].nowFlags & NOW_NAMEENTRY)) {
 			if (!(Players[PLAYER1].nowFlags & NOW_STAFF) || !(Players[PLAYER1].modeFlags & MODE_MASTER) || !(GameFlags & GAME_TWIN)) {
 				if (!(Players[PLAYER1].nowFlags & NOW_STAFF) || !(Players[PLAYER1].modeFlags & MODE_NORMAL) || !(GameFlags & GAME_TWIN)) {
-					if (!(Players[PLAYER1].nowFlags & NOW_STAFF) || !(Players[PLAYER1].modeFlags & (MODE_TGMPLUS | MODE_TADEATH)) || !(GameFlags & GAME_TWIN)) {
+					if (!(Players[PLAYER1].nowFlags & NOW_STAFF) || !(Players[PLAYER1].modeFlags & (MODE_SHIRASE | MODE_TADEATH)) || !(GameFlags & GAME_TWIN)) {
 						if (Players[PLAYER1].nowFlags & NOW_WAITING) {
 							gameMusic1p = GAMEMUSIC_NEGATIVE;
 						}
@@ -794,7 +794,7 @@ void UpdateGameMusic() {
 		else if (!(Players[PLAYER2].nowFlags & NOW_NAMEENTRY)) {
 			if (!(Players[PLAYER2].nowFlags & NOW_STAFF) || !(Players[PLAYER2].modeFlags & MODE_MASTER) || !(GameFlags & GAME_TWIN)) {
 				if (!(Players[PLAYER2].nowFlags & NOW_STAFF) || !(Players[PLAYER2].modeFlags & MODE_NORMAL) || !(GameFlags & GAME_TWIN)) {
-					if (!(Players[PLAYER2].nowFlags & NOW_STAFF) || !(Players[PLAYER2].modeFlags & (MODE_TGMPLUS | MODE_TADEATH)) || !(GameFlags & GAME_TWIN)) {
+					if (!(Players[PLAYER2].nowFlags & NOW_STAFF) || !(Players[PLAYER2].modeFlags & (MODE_SHIRASE | MODE_TADEATH)) || !(GameFlags & GAME_TWIN)) {
 						if (Players[PLAYER2].nowFlags & NOW_WAITING) {
 							gameMusic2p = GAMEMUSIC_NEGATIVE;
 						}
