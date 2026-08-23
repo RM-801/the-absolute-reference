@@ -689,6 +689,28 @@ GameMusic UNK_6008EEC(uint16_t level) {
 	return GAMEMUSIC_7;
 }
 
+static GameMusic ShiraseGameMusic(uint16_t level) {
+	if (level < 480u) {
+		return GAMEMUSIC_1;
+	}
+	if (level < 500u) {
+		return GAMEMUSIC_2;
+	}
+	if (level < 680u) {
+		return GAMEMUSIC_3;
+	}
+	if (level < 700u) {
+		return GAMEMUSIC_4;
+	}
+	if (level < 980u) {
+		return GAMEMUSIC_5;
+	}
+	if (level < 1000u) {
+		return GAMEMUSIC_6;
+	}
+	return GAMEMUSIC_7;
+}
+
 static const uint8_t UNK_3A8CF[11][2] = {
 	{ 1u, 5u },
 	{ 0u, 0u },
@@ -715,7 +737,7 @@ void UpdateGameMusic() {
 			gameMusic1p = GAMEMUSIC_NEGATIVE;
 		}
 		else if (!(Players[PLAYER1].nowFlags & NOW_NAMEENTRY)) {
-			if (!(Players[PLAYER1].nowFlags & NOW_STAFF) || !(Players[PLAYER1].modeFlags & MODE_MASTER) || !(GameFlags & GAME_TWIN)) {
+			if (!(Players[PLAYER1].nowFlags & NOW_STAFF) || !(Players[PLAYER1].modeFlags & (MODE_MASTER | MODE_SHIRASE)) || !(GameFlags & GAME_TWIN)) {
 				if (!(Players[PLAYER1].nowFlags & NOW_STAFF) || !(Players[PLAYER1].modeFlags & MODE_NORMAL) || !(GameFlags & GAME_TWIN)) {
 					if (!(Players[PLAYER1].nowFlags & NOW_STAFF) || !(Players[PLAYER1].modeFlags & (MODE_SHIRASE | MODE_TADEATH)) || !(GameFlags & GAME_TWIN)) {
 						if (Players[PLAYER1].nowFlags & NOW_WAITING) {
@@ -724,7 +746,10 @@ void UpdateGameMusic() {
 						else if (Players[PLAYER1].play.state != PLAYSTATE_START || (Players[PLAYER2].nowFlags & NOW_PLAYING)) {
 							if (!(Players[PLAYER1].nowFlags & NOW_STOPPED)) {
 								if (!(GameFlags & GAME_TWIN)) {
-									if (!(Players[PLAYER1].modeFlags & MODE_DOUBLES)) {
+									if (Players[PLAYER1].modeFlags & MODE_SHIRASE) {
+										gameMusic1p = ShiraseGameMusic(Players[PLAYER1].level);
+									}
+									else if (!(Players[PLAYER1].modeFlags & MODE_DOUBLES)) {
 										gameMusic1p = UNK_6008E38(Players[PLAYER1].level);
 									}
 									else {
@@ -740,6 +765,9 @@ void UpdateGameMusic() {
 										level = Players[PLAYER1].level;
 									}
 									gameMusic1p = UNK_6008EEC(level);
+								}
+								else if (Players[PLAYER1].modeFlags & MODE_SHIRASE) {
+									gameMusic1p = ShiraseGameMusic(Players[PLAYER1].level);
 								}
 								else if (!(GameFlags & GAME_TWIN) || !(Players[PLAYER1].modeFlags & MODE_NORMAL)) {
 									if (!(Players[PLAYER1].modeFlags & MODE_DOUBLES)) {
@@ -792,7 +820,7 @@ void UpdateGameMusic() {
 			gameMusic2p = GAMEMUSIC_NEGATIVE;
 		}
 		else if (!(Players[PLAYER2].nowFlags & NOW_NAMEENTRY)) {
-			if (!(Players[PLAYER2].nowFlags & NOW_STAFF) || !(Players[PLAYER2].modeFlags & MODE_MASTER) || !(GameFlags & GAME_TWIN)) {
+			if (!(Players[PLAYER2].nowFlags & NOW_STAFF) || !(Players[PLAYER2].modeFlags & (MODE_MASTER | MODE_SHIRASE)) || !(GameFlags & GAME_TWIN)) {
 				if (!(Players[PLAYER2].nowFlags & NOW_STAFF) || !(Players[PLAYER2].modeFlags & MODE_NORMAL) || !(GameFlags & GAME_TWIN)) {
 					if (!(Players[PLAYER2].nowFlags & NOW_STAFF) || !(Players[PLAYER2].modeFlags & (MODE_SHIRASE | MODE_TADEATH)) || !(GameFlags & GAME_TWIN)) {
 						if (Players[PLAYER2].nowFlags & NOW_WAITING) {
@@ -801,7 +829,10 @@ void UpdateGameMusic() {
 						else if (Players[PLAYER2].play.state != PLAYSTATE_START || (Players[PLAYER1].nowFlags & NOW_PLAYING)) {
 							if (!(Players[PLAYER2].nowFlags & NOW_STOPPED)) {
 								if (!(GameFlags & GAME_TWIN)) {
-									if (!(Players[PLAYER2].modeFlags & MODE_DOUBLES)) {
+									if (Players[PLAYER2].modeFlags & MODE_SHIRASE) {
+										gameMusic2p = ShiraseGameMusic(Players[PLAYER2].level);
+									}
+									else if (!(Players[PLAYER2].modeFlags & MODE_DOUBLES)) {
 										gameMusic2p = UNK_6008E38(Players[PLAYER2].level);
 									}
 									else {
@@ -817,6 +848,9 @@ void UpdateGameMusic() {
 										level = Players[PLAYER2].level;
 									}
 									gameMusic2p = UNK_6008EEC(level);
+								}
+								else if (Players[PLAYER2].modeFlags & MODE_SHIRASE) {
+									gameMusic2p = ShiraseGameMusic(Players[PLAYER2].level);
 								}
 								else if (!(GameFlags & GAME_TWIN) || !(Players[PLAYER2].modeFlags & MODE_NORMAL)) {
 									if (!(Players[PLAYER2].modeFlags & MODE_DOUBLES)) {

@@ -163,7 +163,7 @@ void UpdateGameBg() {
 				(Players[PLAYER1].nowFlags & NOW_STARTED) &&
 				Players[PLAYER1].play.state != PLAYSTATE_GAMEOVER) {
 				section1p = Players[PLAYER1].section;
-				if ((Players[PLAYER1].modeFlags & MODE_TADEATH) && !(Players[PLAYER1].nowFlags & NOW_SELECTING) && section1p > 9) {
+				if ((Players[PLAYER1].modeFlags & (MODE_TADEATH | MODE_SHIRASE)) && !(Players[PLAYER1].nowFlags & NOW_SELECTING) && section1p > 9) {
 					section1p = 9;
 				}
 			}
@@ -171,7 +171,7 @@ void UpdateGameBg() {
 				(Players[PLAYER2].nowFlags & NOW_STARTED) &&
 				Players[PLAYER2].play.state != PLAYSTATE_GAMEOVER) {
 				section2p = Players[PLAYER2].section;
-				if ((Players[PLAYER2].modeFlags & MODE_TADEATH) && !(Players[PLAYER2].nowFlags & NOW_SELECTING) && section2p > 9) {
+				if ((Players[PLAYER2].modeFlags & (MODE_TADEATH | MODE_SHIRASE)) && !(Players[PLAYER2].nowFlags & NOW_SELECTING) && section2p > 9) {
 					section2p = 9;
 				}
 			}
