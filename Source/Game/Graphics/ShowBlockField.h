@@ -8,6 +8,7 @@
 
 extern const uint16_t PalNumTableNormalBlocks[11];
 uint16_t BlockPalNum(const Player* player, uint8_t blockNum);
+uint16_t BlockTypePalNum(RotationSystem rotationSystem, BlockType blockType);
 const ObjectData* WorldBlockObject(const Player* player, Block block, uint8_t borderMask, const ObjectData* source, ObjectData* destination);
 extern const uint16_t PalNumTableItemBlocks[NUMITEMTYPES];
 extern const Color* PalTableItemFieldBorder[NUMITEMTYPES];

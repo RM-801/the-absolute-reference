@@ -7,6 +7,7 @@
 #include "Platform/Util/WorldBlockData.h"
 #include "Platform/Util/BoneBlockData.h"
 #include "Platform/Util/ShiraseLabelData.h"
+#include "Platform/Util/ShiraseGradeData.h"
 #include "physfs.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,6 +22,7 @@ ROMDATA Color PalSmallText[NUMPALCOLORS_4BPP];
 
 uint8_t* TileData;
 Color WorldBlockPalette[NUMPALCOLORS_8BPP];
+Color ShiraseGradePalette[NUMPALCOLORS_8BPP];
 static const char* const TileRomFileNames[NUMTILEROMS] = {
     "roms/tgm2/81ts_3l.u6",
     "roms/tgm2/82ts_3h.u14",
@@ -310,7 +312,7 @@ void CloseProgramData(const uint8_t* const programData) {
 }
 
 bool OpenTileData() {
-	TileData = malloc(TILEDATA_SIZE + (WORLD_BLOCK_TILE_COUNT + BONE_BLOCK_TILE_COUNT + SHIRASE_LABEL_TILE_COUNT) * NUMPALCOLORS_8BPP);
+	TileData = malloc(TILEDATA_SIZE + (WORLD_BLOCK_TILE_COUNT + BONE_BLOCK_TILE_COUNT + SHIRASE_LABEL_TILE_COUNT + SHIRASE_GRADE_TILE_COUNT) * NUMPALCOLORS_8BPP);
 	if (!TileData) {
 		fprintf(stderr, "Failed allocating memory for tile data\n");
 		return false;
@@ -353,6 +355,10 @@ bool OpenTileData() {
 		const uint8_t* const color = WorldBlockPaletteData[colorIndex];
 		WorldBlockPalette[colorIndex] = COLOR(color[0], color[1], color[2], 0u);
 	}
+	for (size_t colorIndex = 0u; colorIndex < NUMPALCOLORS_8BPP; colorIndex++) {
+		const uint8_t* const color = ShiraseGradePaletteData[colorIndex];
+		ShiraseGradePalette[colorIndex] = COLOR(color[0], color[1], color[2], 0u);
+	}
 
 	uint8_t* const worldTiles = &TileData[TILEDATA_SIZE];
 	for (size_t blockNum = 0u; blockNum < WORLD_BLOCK_COLOR_COUNT; blockNum++) {
@@ -362,9 +368,13 @@ bool OpenTileData() {
 		}
 	}
 	uint8_t* const boneTiles = &worldTiles[WORLD_BLOCK_TILE_COUNT * NUMPALCOLORS_8BPP];
-	for (size_t style = 0u; style < 2u; style++) {
+	for (size_t style = 0u; style < BONE_BLOCK_STYLE_COUNT; style++) {
 		for (size_t borderMask = 0u; borderMask < BONE_BLOCK_BORDER_COUNT; borderMask++) {
-			memcpy(&boneTiles[(style * BONE_BLOCK_BORDER_COUNT + borderMask) * NUMPALCOLORS_8BPP], BoneBlockTileData, NUMPALCOLORS_8BPP);
+			memcpy(
+				&boneTiles[(style * BONE_BLOCK_BORDER_COUNT + borderMask) * NUMPALCOLORS_8BPP],
+				style < 2u ? BoneBlockTileData : BoneBlockPreviewTileData,
+				NUMPALCOLORS_8BPP
+			);
 		}
 	}
 	uint8_t* const labelTiles = &boneTiles[BONE_BLOCK_TILE_COUNT * NUMPALCOLORS_8BPP];
@@ -373,6 +383,17 @@ bool OpenTileData() {
 			uint8_t* const tile = &labelTiles[(label * 4u + tileX) * NUMPALCOLORS_8BPP];
 			for (size_t y = 0u; y < 16u; y++) {
 				memcpy(&tile[y * 16u], &ShiraseLabelImages[label][y][tileX * 16u], 16u);
+			}
+		}
+	}
+	uint8_t* const gradeTiles = &labelTiles[SHIRASE_LABEL_TILE_COUNT * NUMPALCOLORS_8BPP];
+	for (size_t grade = 0u; grade < 4u; grade++) {
+		for (size_t tileY = 0u; tileY < 2u; tileY++) {
+			for (size_t tileX = 0u; tileX < 3u; tileX++) {
+				uint8_t* const tile = &gradeTiles[(grade * 6u + tileY * 3u + tileX) * NUMPALCOLORS_8BPP];
+				for (size_t y = 0u; y < 16u; y++) {
+					memcpy(&tile[y * 16u], &ShiraseGradeImages[grade][tileY * 16u + y][tileX * 16u], 16u);
+				}
 			}
 		}
 	}

@@ -47,19 +47,18 @@ void ShowFieldBlockExplosion(Player* player, int16_t row, int16_t col) {
 		data->x = player->screenPos[0] + 8 * col - 8 * (player->matrixWidth / 2);
 		data->y = player->screenPos[1] - 8 * row - 6;
 		data->objectTable = ObjectTablesBlockExplosions[Rand(8u) % 8];
-		uint8_t blockNum = TOBLOCKNUM(MATRIX(player, row, col).block & BLOCK_TYPE);
+		const BlockType blockType = MATRIX(player, row, col).block & BLOCK_TYPE;
 		// BUG: The SHOTGUN! item calls this function after setting matrix
 		// blocks to empty, resulting in this function reading BLOCKTYPE_EMPTY
 		// from the matrix, which then results in an out-of-bounds access of
 		// PalNumTableNormalBlocks. It ends up using palette 10 in that case,
 		// reading that number from somewhere in memory, and this fix
 		// reproduces that behavior.
-		if ((MATRIX(player, row, col).block & BLOCK_TYPE) == BLOCKTYPE_EMPTY) {
+		if (blockType == BLOCKTYPE_EMPTY) {
 			data->palNum = 10u;
 		}
 		else {
-			assert(blockNum < lengthof(PalNumTableNormalBlocks));
-			data->palNum = BlockPalNum(player, blockNum);
+			data->palNum = BlockTypePalNum(player->rotationSystem, blockType);
 		}
 	}
 }
@@ -235,12 +234,16 @@ void ShowLineClear(Player* player, int16_t row) {
 		data->y = player->screenPos[1] - entity->clearRow * 8 - 6;
 		uint32_t explosionSeed = Rand(1999u);
 		for (int16_t col = 1; col < entity->explosionsWidth - 1; col++, explosionSeed += 3u) {
+			if (MATRIX(player, row, col).bone) {
+				data->objectTables[col - 1] = NULL;
+				continue;
+			}
+
 			if (player->modeFlags & MODE_BIG) {
 				if (row % 3 == col % 3) {
 					data->objectTables[col - 1] = ObjectTablesBlockExplosions[explosionSeed % 8];
-					const uint8_t blockNum = TOBLOCKNUM(MATRIX(player, row, col).block & BLOCK_TYPE);
-					assert(blockNum < lengthof(PalNumTableNormalBlocks));
-					data->palNums[col - 1] = BlockPalNum(player, blockNum);
+					const BlockType blockType = MATRIX(player, row, col).block & BLOCK_TYPE;
+					data->palNums[col - 1] = BlockTypePalNum(player->rotationSystem, blockType);
 				}
 				else {
 					data->objectTables[col - 1] = NULL;
@@ -249,9 +252,8 @@ void ShowLineClear(Player* player, int16_t row) {
 			else {
 				if (row % 2 == col % 2) {
 					data->objectTables[col - 1] = ObjectTablesBlockExplosions[explosionSeed % 8];
-					const uint8_t blockNum = TOBLOCKNUM(MATRIX(player, row, col).block & BLOCK_TYPE);
-					assert(blockNum < lengthof(PalNumTableNormalBlocks));
-					data->palNums[col - 1] = BlockPalNum(player, blockNum);
+					const BlockType blockType = MATRIX(player, row, col).block & BLOCK_TYPE;
+					data->palNums[col - 1] = BlockTypePalNum(player->rotationSystem, blockType);
 				}
 				else {
 					data->objectTables[col - 1] = NULL;
@@ -294,8 +296,7 @@ void ShowStaffClear(Player* player, int16_t row) {
 					data->palNums[col - 1] = *(&invalidPalNums[2] + (int16_t)blockType - 2);
 				}
 				else {
-					assert(TOBLOCKNUM(blockType) < lengthof(PalNumTableNormalBlocks));
-					data->palNums[col - 1] = BlockPalNum(player, TOBLOCKNUM(blockType));
+					data->palNums[col - 1] = BlockTypePalNum(player->rotationSystem, (BlockType)blockType);
 				}
 			}
 			else {

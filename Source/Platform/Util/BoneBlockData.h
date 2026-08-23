@@ -4,6 +4,25 @@
 
 static const uint8_t BoneBlockTileData[256] = {
 	0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
+	0u, 255u, 255u, 1u, 1u, 255u, 255u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
+	0u, 255u, 1u, 1u, 1u, 1u, 255u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
+	0u, 255u, 1u, 1u, 1u, 1u, 255u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
+	0u, 255u, 1u, 1u, 1u, 1u, 255u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
+	0u, 255u, 1u, 1u, 1u, 1u, 255u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
+	0u, 255u, 255u, 1u, 1u, 255u, 255u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
+	0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
+	0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
+	0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
+	0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
+	0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
+	0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
+	0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
+	0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
+	0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
+};
+
+static const uint8_t BoneBlockPreviewTileData[256] = {
+	0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
 	0u, 255u, 255u, 0u, 0u, 255u, 255u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
 	0u, 255u, 0u, 0u, 0u, 0u, 255u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,
 	0u, 255u, 0u, 0u, 0u, 0u, 255u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u,

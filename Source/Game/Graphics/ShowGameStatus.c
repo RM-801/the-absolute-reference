@@ -12,6 +12,7 @@
 #include "Input/Credit.h"
 #include "Eeprom/Setting.h"
 #include "Platform/Util/AccessData.h"
+#include <string.h>
 
 const ObjectData* ObjectTableStatusDigits[10] = {
 	&OBJECTTABLE_STATUSDIGITS[0],
@@ -241,6 +242,29 @@ void ShowGrade(Player* player, uint8_t palNum) {
 		if (player->gradeBefore != player->grade) {
 			player->gradeScale = (UNSCALED + 1u) * 2u;
 		}
+	}
+}
+
+static void ShowShiraseGrade(Player* player, uint8_t palNum) {
+	uint16_t grade = player->level / 100u;
+	if (grade == 0u) {
+		return;
+	}
+	if (grade > 13u) {
+		grade = 13u;
+	}
+	if (grade <= 9u) {
+		DisplayObject(ObjectTableGrades[PLAYERGRADE_S1 + grade - 1u], 35, player->screenPos[0] + 50, palNum, LAYER_GAMESTATUS);
+	}
+	else {
+		ObjectData object;
+		memcpy(&object, ObjectTableGrades[PLAYERGRADE_S9], sizeof(object));
+		OBJECT_SETW(&object, 2u);
+		OBJECT_SETH(&object, 1u);
+		OBJECT_SETBPP(&object, BPP_8);
+		OBJECT_SETTILE(&object, SHIRASE_GRADE_TILE_BASE + (grade - 10u) * 6u);
+		OBJECT_SETPALNUM(&object, 0u);
+		DisplayObject(&object, 32, player->screenPos[0] + 42, 0u, LAYER_GAMESTATUS);
 	}
 }
 
@@ -776,6 +800,14 @@ void ShowPlayersStatus() {
 
 			if (player->modeFlags & MODE_MASTER) {
 				ShowGrade(player, *gradePalNum);
+			}
+			if (player->modeFlags & MODE_SHIRASE) {
+				if (player->grade >= PLAYERGRADE_GM) {
+					ShowGrade(player, *gradePalNum);
+				}
+				else {
+					ShowShiraseGrade(player, *gradePalNum);
+				}
 			}
 			if ((player->modeFlags & MODE_TADEATH) && player->grade >= PLAYERGRADE_M) {
 				ShowGrade(player, *gradePalNum);

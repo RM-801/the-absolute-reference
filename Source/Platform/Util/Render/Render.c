@@ -130,6 +130,7 @@ static void RenderSprites(Color* const framebuffer, const uint8_t* const tileDat
 			const bool worldBlockTile = bpp == BPP_8 && tile >= WORLD_BLOCK_TILE_BASE && tile < WORLD_BLOCK_TILE_BASE + WORLD_BLOCK_TILE_COUNT;
 			const bool boneBlockTile = bpp == BPP_8 && tile >= BONE_BLOCK_CLASSIC_TILE && tile < BONE_BLOCK_CLASSIC_TILE + BONE_BLOCK_TILE_COUNT;
 			const bool shiraseLabelTile = bpp == BPP_8 && tile >= SHIRASE_LABEL_TILE_BASE && tile < SHIRASE_LABEL_TILE_BASE + SHIRASE_LABEL_TILE_COUNT;
+			const bool shiraseGradeTile = bpp == BPP_8 && tile >= SHIRASE_GRADE_TILE_BASE && tile < SHIRASE_GRADE_TILE_BASE + SHIRASE_GRADE_TILE_COUNT;
 			const uint32_t worldBlockBrightness = worldBlockTile ? WorldBlockBrightness(tile, palNum) : 0xFFu;
 			const uint32_t boneBlockBrightness = boneBlockTile ? BoneBlockBrightness(palNum) : 0xFFu;
 
@@ -173,10 +174,13 @@ static void RenderSprites(Color* const framebuffer, const uint8_t* const tileDat
 						continue;
 					}
 					else {
-						uint32_t blendAlpha = blockBorderPixel || boneBlockTile || shiraseLabelTile ? 0xFFu : ((alpha == PIXELALPHA) ? AlphaTable[palOffset] : alpha) & 0xFFu;
+						uint32_t blendAlpha = blockBorderPixel || boneBlockTile || shiraseLabelTile || shiraseGradeTile ? 0xFFu : ((alpha == PIXELALPHA) ? AlphaTable[palOffset] : alpha) & 0xFFu;
 						Color worldBlockColor;
 						const Color* color;
-						if (shiraseLabelTile) {
+						if (shiraseGradeTile) {
+							color = &ShiraseGradePalette[palOffset];
+						}
+						else if (shiraseLabelTile) {
 							const uint32_t brightness = palOffset * 17u;
 							worldBlockColor = COLOR(brightness, brightness * 11u / 16u, 0u, 0u);
 							color = &worldBlockColor;
@@ -184,6 +188,9 @@ static void RenderSprites(Color* const framebuffer, const uint8_t* const tileDat
 						else if (boneBlockTile) {
 							if (blockBorderPixel) {
 								worldBlockColor = COLOR(0x80u, 0x80u, 0x80u, 0u);
+							}
+							else if (palOffset == 1u) {
+								worldBlockColor = COLOR(0u, 0u, 0u, 0u);
 							}
 							else if (tile < BONE_BLOCK_WORLD_TILE) {
 								worldBlockColor = COLOR(boneBlockBrightness, boneBlockBrightness, boneBlockBrightness, 0u);
