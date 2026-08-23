@@ -278,6 +278,10 @@ struct Player {
 	Block nextBlock;
 	Block shiraseNextBlocks[2];
 	Block holdBlock;
+	bool activeBlockBone;
+	bool nextBlockBone;
+	bool shiraseNextBlocksBone[2];
+	bool holdBlockBone;
 	Rotation activeRotation;
 	RotationSystem rotationMode;
 	RotationSystem rotationSystem;
@@ -320,6 +324,7 @@ struct Player {
 	uint8_t rotationResetTimes;
 	uint8_t shiraseFloorKicks;
 	bool landingFlag;
+	bool shiraseTorikan;
 };
 
 extern bool Demo;

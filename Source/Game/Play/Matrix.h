@@ -41,4 +41,5 @@ typedef struct MatrixBlock {
 	ItemType itemType;
 	int16_t visibleFrames;
 	uint8_t rotationSystem;
+	uint8_t bone;
 } MatrixBlock;

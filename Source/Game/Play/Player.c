@@ -185,6 +185,7 @@ static bool ManualLockUnprotected[NUMPLAYERS];
 
 typedef struct EntryData {
 	Block tempMatrix[MATRIX_HEIGHT * FIELD_SINGLEWIDTH * NUMPLAYERS];
+	bool tempMatrixBone[MATRIX_HEIGHT * FIELD_SINGLEWIDTH * NUMPLAYERS];
 	uint16_t numMatrixBlockings;
 	uint16_t numPlayerBlockings;
 	uint8_t itemWeights[NUMITEMTYPES];
@@ -193,6 +194,7 @@ typedef struct EntryData {
 static bool Blocked(Player* player, int16_t col, int16_t row, Rotation rotation);
 bool UpdateModeCodes(Player* player);
 static void BackupMatrix(Player* player);
+static bool ShiraseBlocksAreBone(const Player* player);
 void CheckDisableItemDescription(Player* player);
 void CheckSetItemMode(Player* player);
 uint16_t GenNextInt(uint32_t* seed, bool update);
@@ -333,6 +335,7 @@ void InitPlayer(PlayerNum playerNum) {
 
 	// Active block.
 	player->activeBlock = (Block)BLOCKTYPE_I;
+	player->activeBlockBone = false;
 	player->rotationMode = ROTATIONSYSTEM_CLASSIC;
 	player->rotationSystem = ROTATIONSYSTEM_CLASSIC;
 	player->nextRotationSystem = ROTATIONSYSTEM_CLASSIC;
@@ -364,6 +367,7 @@ void InitPlayer(PlayerNum playerNum) {
 	player->moveResetTimes = 0u;
 	player->rotationResetTimes = 0u;
 	player->landingFlag = false;
+	player->shiraseTorikan = false;
 
 	// Player GRS data.
 	player->section = 0u;
@@ -412,8 +416,12 @@ void InitPlayer(PlayerNum playerNum) {
 		}
 	}
 	player->nextBlock = (Block)TOBLOCKTYPE(nextBlockNum);
+	player->nextBlockBone = false;
 	player->shiraseNextQueueReady = false;
 	player->holdBlock = NULLBLOCK;
+	player->holdBlockBone = false;
+	player->shiraseNextBlocksBone[0] = false;
+	player->shiraseNextBlocksBone[1] = false;
 	player->holdUsed = false;
 	size_t historyIndex = 0u;
 	for (; historyIndex < lengthoffield(Player, history) / 2; historyIndex++) {
@@ -460,6 +468,7 @@ void InitPlayer(PlayerNum playerNum) {
 					MATRIX(player, row, col).block = NULLBLOCK;
 				}
 				MATRIX(player, row, col).itemType = ITEMTYPE_NULL;
+				MATRIX(player, row, col).bone = false;
 			}
 		}
 	}
@@ -496,8 +505,10 @@ void StartPlayer(Player* player) {
 	InitState(player);
 	if ((player->modeFlags & MODE_SHIRASE) && !player->shiraseNextQueueReady) {
 		player->shiraseNextBlocks[0] = GenRandomizedNextBlock(player);
+		player->shiraseNextBlocksBone[0] = ShiraseBlocksAreBone(player);
 		player->shiraseNextRotationSystems[0] = GenNextRotationSystem(player);
 		player->shiraseNextBlocks[1] = GenRandomizedNextBlock(player);
+		player->shiraseNextBlocksBone[1] = ShiraseBlocksAreBone(player);
 		player->shiraseNextRotationSystems[1] = GenNextRotationSystem(player);
 		player->shiraseNextQueueReady = true;
 	}
@@ -795,6 +806,8 @@ void StartDoubles(Player* player) {
 	Player* player2 = &Players[PLAYER2];
 	player1->nextBlock &= BLOCK_TYPE;
 	player2->nextBlock &= BLOCK_TYPE;
+	player1->nextBlockBone = false;
+	player2->nextBlockBone = false;
 	player1->nowFlags = NOW_PLAYING | NOW_STARTED;
 	player2->nowFlags = NOW_PLAYING | NOW_STARTED;
 
@@ -1036,10 +1049,12 @@ void UpdatePlayerSelecting(Player* player) {
 			if (player->modeFlags & MODE_SHIRASE) {
 				player->modeFlags &= MODE_20G | MODE_SHIRASE | MODE_ITEM | MODE_TLS;
 				player->nextBlock &= BLOCK_TYPE;
+				player->nextBlockBone = false;
 			}
 			if (player->modeFlags & MODE_TADEATH) {
 				player->modeFlags &= MODE_TADEATH;
 				player->nextBlock &= BLOCK_TYPE;
+				player->nextBlockBone = false;
 			}
 			player->nowFlags = NOW_PLAYING | NOW_STARTED;
 			StartPlayer(player);
@@ -1324,6 +1339,54 @@ void NextPlayStart(Player* player) {
 void NextPlayGarbageCheck(Player* player) {
 	player->play.state = PLAYSTATE_GARBAGECHECK;
 	player->play.flags &= ~PLAYFLAG_FORCEENTRY;
+}
+
+static bool CheckShiraseTorikan(Player* player, uint16_t previousLevel) {
+	if (!(player->modeFlags & MODE_SHIRASE) || player->nowFlags & NOW_STAFF) {
+		return false;
+	}
+
+	const bool classic = player->rotationMode == ROTATIONSYSTEM_CLASSIC;
+	const uint32_t level500Limit = classic ? TIME(2, 28, 0) : TIME(3, 3, 0);
+	const uint32_t level1000Limit = classic ? TIME(4, 56, 0) : TIME(6, 6, 0);
+
+	if (previousLevel < 500u && player->level >= 500u && player->clearTime > level500Limit) {
+		player->level = 500u;
+		player->shiraseTorikan = true;
+		NextPlayGameOver(player);
+		return true;
+	}
+	if (previousLevel < 1000u && player->level >= 1000u && player->clearTime > level1000Limit) {
+		player->level = 1000u;
+		player->shiraseTorikan = true;
+		NextPlayGameOver(player);
+		return true;
+	}
+	return false;
+}
+
+static void CheckShiraseSectionEntry(Player* player, uint16_t previousLevel) {
+	if ((player->modeFlags & MODE_SHIRASE) && previousLevel < 500u && player->level >= 500u) {
+		player->numShiraseBlocks = 0u;
+	}
+}
+
+static bool ShiraseBlocksAreBone(const Player* player) {
+	return (player->modeFlags & MODE_SHIRASE) && player->level >= SHIRASE_BONE_LEVEL;
+}
+
+static void SetShiraseRollBlocksBig(Player* player) {
+	player->modeFlags |= MODE_BIG;
+	player->nextBlock |= BLOCK_BIG;
+	player->nextBlockBone = true;
+	player->shiraseNextBlocks[0] |= BLOCK_BIG;
+	player->shiraseNextBlocksBone[0] = true;
+	player->shiraseNextBlocks[1] |= BLOCK_BIG;
+	player->shiraseNextBlocksBone[1] = true;
+	if (player->holdBlock != NULLBLOCK) {
+		player->holdBlock |= BLOCK_BIG;
+		player->holdBlockBone = true;
+	}
 }
 
 void NextPlayActive(Player* player) {
@@ -1725,6 +1788,10 @@ static bool ShiraseClassicRotationBlockedCheckKick(Player* player, int16_t col, 
 		return true;
 	}
 
+	if (!Blocked(player, col, row, rotation)) {
+		return false;
+	}
+
 	const int16_t kickScale = (player->activeBlock & BLOCK_BIG) ? 2 : 1;
 
 	if (blockType == BLOCKTYPE_T) {
@@ -1816,7 +1883,8 @@ static bool WorldRotationBlockedCheckKick(Player* player, int16_t col, int16_t r
 		for (int i = 0; i < 5; ++i) {
 			int dx = srs_kick_table_I[rot_index][i][0];
 			int dy = srs_kick_table_I[rot_index][i][1];
-			int test_col = col + dx;
+			const int testDx = (player->activeBlock & BLOCK_BIG) ? dx * 2 : dx;
+			int test_col = col + testDx;
 			int test_row = row + dy;
 			bool blocked = false;
 			if (player->activeBlock & BLOCK_BIG) {
@@ -1854,7 +1922,7 @@ static bool WorldRotationBlockedCheckKick(Player* player, int16_t col, int16_t r
 				}
 			}
 			if (!blocked) {
-				player->activePos[0].integer += dx;
+				player->activePos[0].integer += testDx;
 				player->activePos[1].integer += dy;
 				return false;
 			}
@@ -1874,7 +1942,8 @@ static bool WorldRotationBlockedCheckKick(Player* player, int16_t col, int16_t r
 		for (int i = 0; i < 5; ++i) {
 			int dx = srs_kick_table_normal[rot_index][i][0];
 			int dy = srs_kick_table_normal[rot_index][i][1];
-			int test_col = col + dx;
+			const int testDx = (player->activeBlock & BLOCK_BIG) ? dx * 2 : dx;
+			int test_col = col + testDx;
 			int test_row = row + dy;
 			bool blocked = false;
 			if (player->activeBlock & BLOCK_BIG) {
@@ -1912,7 +1981,7 @@ static bool WorldRotationBlockedCheckKick(Player* player, int16_t col, int16_t r
 				}
 			}
 			if (!blocked) {
-				player->activePos[0].integer += dx;
+				player->activePos[0].integer += testDx;
 				player->activePos[1].integer += dy;
 				return false;
 			}
@@ -2046,23 +2115,18 @@ void LandActiveBlock(Player* player, Fixed32 gravityStep) {
 			bool manualLock;
 			if (player->rotationMode == ROTATIONSYSTEM_MIXED && gravityStep.integer == 20) {
 				manualLock =
-					(GameButtonsDown[player->num] & BUTTON_ALLDIRECTIONS) == BUTTON_DOWN ||
+					(GameButtonsDown[player->num] & DiagonalDownwardMask) == BUTTON_DOWN ||
 					(GameButtonsDown[player->num] & DiagonalUpperwardMask) == BUTTON_UP;
 			}
 			else if (player->rotationSystem == ROTATIONSYSTEM_CLASSIC) {
-				manualLock = (GameButtonsDown[player->num] & BUTTON_ALLDIRECTIONS) == BUTTON_DOWN;
+				manualLock = (GameButtonsDown[player->num] & DiagonalDownwardMask) == BUTTON_DOWN;
 			}
-			else {
+			else if (player->rotationSystem == ROTATIONSYSTEM_WORLD) {
 				manualLock = (GameButtonsDown[player->num] & DiagonalUpperwardMask) == BUTTON_UP;
 			}
 			if (manualLock) {
-				if (player->modeFlags & MODE_TADEATH) {
-					if (player->level >= 0u) {
-						if (ManualLockUnprotected[player->num]) {
-							player->lockFrames = 0;
-						}
-					}
-					else {
+				if (player->modeFlags & (MODE_TADEATH|MODE_SHIRASE)) {
+					if (ManualLockUnprotected[player->num]) {
 						player->lockFrames = 0;
 					}
 				}
@@ -2129,6 +2193,38 @@ Fixed32 StepGravity(Player* player, Fixed32 gravity) {
 	return posY;
 }
 
+static void HoldShiraseBlock(Player* player) {
+	const Block outgoingBlock = player->activeBlock;
+	const bool outgoingBlockBone = player->activeBlockBone;
+	const RotationSystem outgoingRotationSystem = player->rotationSystem;
+
+	if (player->holdBlock == NULLBLOCK) {
+		player->activeBlock = player->nextBlock;
+		player->activeBlockBone = player->nextBlockBone;
+		player->rotationSystem = player->nextRotationSystem;
+		player->nextBlock = player->shiraseNextBlocks[0];
+		player->nextBlockBone = player->shiraseNextBlocksBone[0];
+		player->nextRotationSystem = player->shiraseNextRotationSystems[0];
+		player->shiraseNextBlocks[0] = player->shiraseNextBlocks[1];
+		player->shiraseNextBlocksBone[0] = player->shiraseNextBlocksBone[1];
+		player->shiraseNextRotationSystems[0] = player->shiraseNextRotationSystems[1];
+		player->shiraseNextBlocks[1] = GenRandomizedNextBlock(player);
+		player->shiraseNextBlocksBone[1] = ShiraseBlocksAreBone(player);
+		player->shiraseNextRotationSystems[1] = GenNextRotationSystem(player);
+	}
+	else {
+		player->activeBlock = player->holdBlock;
+		player->activeBlockBone = player->holdBlockBone;
+		player->rotationSystem = player->holdRotationSystem;
+	}
+
+	player->holdBlock = outgoingBlock;
+	player->holdBlockBone = outgoingBlockBone;
+	player->holdRotationSystem = outgoingRotationSystem;
+	player->blockDefs = player->rotationSystem == ROTATIONSYSTEM_CLASSIC ? ClassicBlockDefs : WorldBlockDefs;
+	player->holdUsed = true;
+}
+
 void UpdatePlayActive(Player* player) {
 	if (player->play.flags & PLAYFLAG_FORCEENTRY) {
 		ThrowOutActiveBlock(player);
@@ -2138,33 +2234,16 @@ void UpdatePlayActive(Player* player) {
 
 	CheckDecayGrade(player);
 
-	const bool initialHold = player->numActiveFrames == 1u && (GameButtonsDown[player->num] & BUTTON_4);
-	if ((player->modeFlags & MODE_SHIRASE) && !player->holdUsed && ((GameButtonsNew[player->num] & BUTTON_4) || initialHold)) {
-		const Block outgoingBlock = player->activeBlock;
-		const RotationSystem outgoingRotationSystem = player->rotationSystem;
-		if (player->holdBlock == NULLBLOCK) {
-			player->activeBlock = player->nextBlock;
-			player->rotationSystem = player->nextRotationSystem;
-			player->nextBlock = player->shiraseNextBlocks[0];
-			player->nextRotationSystem = player->shiraseNextRotationSystems[0];
-			player->shiraseNextBlocks[0] = player->shiraseNextBlocks[1];
-			player->shiraseNextRotationSystems[0] = player->shiraseNextRotationSystems[1];
-			player->shiraseNextBlocks[1] = GenRandomizedNextBlock(player);
-			player->shiraseNextRotationSystems[1] = GenNextRotationSystem(player);
-		}
-		else {
-			player->activeBlock = player->holdBlock;
-			player->rotationSystem = player->holdRotationSystem;
-		}
-		player->holdBlock = outgoingBlock;
-		player->holdRotationSystem = outgoingRotationSystem;
-		player->blockDefs = player->rotationSystem == ROTATIONSYSTEM_CLASSIC ? ClassicBlockDefs : WorldBlockDefs;
+	if ((player->modeFlags & MODE_SHIRASE) && !player->holdUsed && (GameButtonsNew[player->num] & BUTTON_4)) {
+		HoldShiraseBlock(player);
 		player->activeRotation = ENTRY_ROTATION(player);
 		player->activePos[0] = F32(ENTRY_SINGLECOL, 0x0000);
+		if (player->modeFlags & MODE_BIG) {
+			player->activePos[0].integer++;
+		}
 		player->activePos[1] = ENTRYPOS_Y;
 		player->lockFrames = player->lockDelay;
 		player->shiraseFloorKicks = 0u;
-		player->holdUsed = true;
 		if (ROTATED_ANY(GameButtonsDown[player->num])) {
 			const Rotation initialRotation = ROTATED_LEFT(GameButtonsDown[player->num]) ? ROTATE_LEFT(player->activeRotation) : ROTATE_RIGHT(player->activeRotation);
 			if (!Blocked(player, player->activePos[0].integer, player->activePos[1].integer, initialRotation)) {
@@ -2175,6 +2254,16 @@ void UpdatePlayActive(Player* player) {
 		}
 		if (Blocked(player, player->activePos[0].integer, player->activePos[1].integer, player->activeRotation)) {
 			NextPlayGameOver(player);
+		}
+		else {
+			Fixed32 gravity = CurrentGravity(player);
+			player->gravity = gravity;
+			if ((player->modeFlags & MODE_20G) || ((player->nowFlags & NOW_STAFF) && (player->modeFlags & MODE_NORMAL))) {
+				gravity = F32(20, 0x0000);
+			}
+			if (gravity.integer >= 1) {
+				player->activePos[1] = StepGravity(player, gravity);
+			}
 		}
 		return;
 	}
@@ -2311,6 +2400,7 @@ static inline void WriteBlockToMatrix(Player* const player, const LockType lockT
 					else {
 						MATRIX(player, matrixRow, lockCol + blockCol).block = player->activeBlock;
 					}
+					MATRIX(player, matrixRow, lockCol + blockCol).bone = player->activeBlockBone;
 
 					if (player->activeBlock & BLOCK_ITEM) {
 						MATRIX(player, matrixRow, lockCol + blockCol).block |= BLOCK_ITEM;
@@ -2371,6 +2461,7 @@ static void BackupMatrix(Player* player) {
 	for (int16_t row = 0; row < player->matrixHeight; row++) {
 		for (int16_t col = 0; col < player->matrixWidth - 1; col++) {
 			entry->tempMatrix[row * FIELD_SINGLEWIDTH * NUMPLAYERS + col] = MATRIX(player, row, col).block & ~BLOCK_INVISIBLE;
+			entry->tempMatrixBone[row * FIELD_SINGLEWIDTH * NUMPLAYERS + col] = MATRIX(player, row, col).bone;
 		}
 	}
 }
@@ -2380,6 +2471,7 @@ static void RestoreMatrix(Player* player) {
 	for (int16_t row = 0; row < player->matrixHeight; row++) {
 		for (int16_t col = 0; col < player->matrixWidth - 1; col++) {
 			MATRIX(player, row, col).block = entry->tempMatrix[row * FIELD_SINGLEWIDTH * NUMPLAYERS + col];
+			MATRIX(player, row, col).bone = entry->tempMatrixBone[row * FIELD_SINGLEWIDTH * NUMPLAYERS + col];
 		}
 	}
 }
@@ -2407,9 +2499,7 @@ static bool Line(Player* player, int16_t row) {
 static LineFlag StartClear(Player* player, LineFlag lineFlags) {
 	for (int16_t row = 1; row < player->matrixHeight - 1; row++) {
 		if ((1 << row) & lineFlags) {
-			if (!((player->modeFlags & MODE_TGMPLUS) && player->level >= SHIRASE_BONE_LEVEL && player->level < 1300u)) {
-				ShowLineClear(player, row);
-			}
+			ShowLineClear(player, row);
 			MatrixBlock* matrixBlock = &MATRIX(player, row, 1);
 			for (int16_t col = 1; col < player->matrixWidth - 1; col++, matrixBlock++) {
 				if (matrixBlock->block & BLOCK_HARD) {
@@ -2425,6 +2515,7 @@ static LineFlag StartClear(Player* player, LineFlag lineFlags) {
 					}
 					matrixBlock->block = NULLBLOCK;
 					matrixBlock->itemType = ITEMTYPE_NULL;
+					matrixBlock->bone = false;
 				}
 			}
 		}
@@ -2537,6 +2628,9 @@ void UpdatePlayLock(Player* player) {
 
 		if (!(player->nowFlags & NOW_STAFF)) {
 			pointsBaseValue = PointsBaseValue(player, numLines);
+			if (player->shiraseTorikan) {
+				return;
+			}
 		}
 	}
 
@@ -2665,6 +2759,7 @@ void UpdatePlayClear(Player* player) {
 				for (int16_t col = 1; col < player->matrixWidth - 1; col++) {
 					MATRIX(player, player->matrixHeight - 1, col).block = NULLBLOCK;
 					MATRIX(player, player->matrixHeight - 1, col).itemType = ITEMTYPE_NULL;
+					MATRIX(player, player->matrixHeight - 1, col).bone = false;
 				}
 				// Other player's active block is forced down if the field is
 				// blocking it after collapsing a row.
@@ -2718,12 +2813,9 @@ void UpdatePlayClear(Player* player) {
 			else if ((player->modeFlags & MODE_SHIRASE) && (GameFlags & GAME_TWIN)) {
 				if (player->level >= 1300u) {
 					player->level = 1300u;
-					player->modeFlags |= MODE_BIG;
-					player->nextBlock |= BLOCK_BIG;
-					player->shiraseNextBlocks[0] |= BLOCK_BIG;
-					player->shiraseNextBlocks[1] |= BLOCK_BIG;
-					player->nowFlags |= NOW_STAFF;
-					ShowStaff(player);
+					PlaySoundEffect(SOUNDEFFECT_GRANDMASTER);
+					SetShiraseRollBlocksBig(player);
+					NextPlayStaffTransition(player);
 				}
 			}
 			else if ((player->modeFlags & MODE_TADEATH) && (GameFlags & GAME_TWIN)) {
@@ -2908,6 +3000,7 @@ void UpdatePlayNext(Player* player) {
 
 	// Generate next block.
 	player->activeBlock = player->nextBlock;
+	player->activeBlockBone = player->nextBlockBone;
 	player->holdUsed = false;
 	player->rotationSystem = player->nextRotationSystem;
 	player->blockDefs = player->rotationSystem == ROTATIONSYSTEM_CLASSIC ? ClassicBlockDefs : WorldBlockDefs;
@@ -2916,23 +3009,35 @@ void UpdatePlayNext(Player* player) {
 	if (player->modeFlags & MODE_SHIRASE) {
 		if (player->shiraseNextQueueReady) {
 			player->nextBlock = player->shiraseNextBlocks[0];
+			player->nextBlockBone = player->shiraseNextBlocksBone[0];
 			player->nextRotationSystem = player->shiraseNextRotationSystems[0];
 			player->shiraseNextBlocks[0] = player->shiraseNextBlocks[1];
+			player->shiraseNextBlocksBone[0] = player->shiraseNextBlocksBone[1];
 			player->shiraseNextRotationSystems[0] = player->shiraseNextRotationSystems[1];
 		}
 		else {
 			player->nextBlock = GenRandomizedNextBlock(player);
+			player->nextBlockBone = ShiraseBlocksAreBone(player);
 			player->nextRotationSystem = GenNextRotationSystem(player);
 			player->shiraseNextBlocks[0] = GenRandomizedNextBlock(player);
+			player->shiraseNextBlocksBone[0] = ShiraseBlocksAreBone(player);
 			player->shiraseNextRotationSystems[0] = GenNextRotationSystem(player);
 			player->shiraseNextQueueReady = true;
 		}
 		player->shiraseNextBlocks[1] = GenRandomizedNextBlock(player);
+		player->shiraseNextBlocksBone[1] = ShiraseBlocksAreBone(player);
 		player->shiraseNextRotationSystems[1] = GenNextRotationSystem(player);
 	}
 	else {
 		player->nextBlock = GenRandomizedNextBlock(player);
+		player->nextBlockBone = false;
 		player->nextRotationSystem = GenNextRotationSystem(player);
+	}
+
+	// IHS is resolved before entry position and IRS so the held block is
+	// the first block displayed in the field.
+	if ((player->modeFlags & MODE_SHIRASE) && !player->holdUsed && (GameButtonsDown[player->num] & BUTTON_4)) {
+		HoldShiraseBlock(player);
 	}
 
 	// Item/big mode.
@@ -3150,11 +3255,13 @@ void UpdatePlayGarbageEntry(Player* player) {
 					MATRIX(player, 1, col).block = player->garbage[col - 1] & BLOCK_TYPE;
 				}
 				MATRIX(player, 1, col).brightness = 0;
+				MATRIX(player, 1, col).bone = false;
 			}
 			else {
 				MATRIX(player, 1, col).block = player->garbage[col - 1] & BLOCK_TYPE;
 				MATRIX(player, 1, col).itemType = ITEMTYPE_NULL;
 				MATRIX(player, 1, col).brightness = 0;
+				MATRIX(player, 1, col).bone = false;
 			}
 		}
 
@@ -3216,6 +3323,11 @@ void UpdateShiraseGarbage(Player* player) {
 	MatrixBlock bottomRow[MATRIX_SINGLEWIDTH];
 	for (int16_t col = 1; col < player->matrixWidth - 1; col++) {
 		bottomRow[col] = MATRIX(player, 1, col);
+		if (bottomRow[col].block != NULLBLOCK) {
+			bottomRow[col].block = (bottomRow[col].block & ~BLOCK_TYPE) | BLOCKTYPE_GARBAGE;
+			bottomRow[col].itemType = ITEMTYPE_NULL;
+			bottomRow[col].bone = false;
+		}
 	}
 	for (int16_t row = player->matrixHeight - 2; row > 1; row--) {
 		for (int16_t col = 1; col < player->matrixWidth - 1; col++) {
@@ -3250,8 +3362,8 @@ void UpdatePlayEntry(Player* player) {
 		else if (player->modeFlags & MODE_NORMAL) {
 			maxLevel = NextSectionLevels[2];
 		}
-		else if (player->modeFlags & MODE_TGMPLUS) {
-			maxLevel = 1300;
+		else if (player->modeFlags & MODE_SHIRASE) {
+			maxLevel = player->section < 13u ? (int16_t)((player->section + 1u) * 100u) : 1300;
 		}
 		else {
 			maxLevel = NextSectionLevels[player->section];
@@ -3259,8 +3371,13 @@ void UpdatePlayEntry(Player* player) {
 		maxLevel--;
 
 		if (!(player->nowFlags & NOW_STAFF)) {
+			const uint16_t previousLevel = player->level;
 			if (++player->level > maxLevel) {
 				player->level = maxLevel;
+			}
+			CheckShiraseSectionEntry(player, previousLevel);
+			if (CheckShiraseTorikan(player, previousLevel)) {
+				return;
 			}
 		}
 	}
@@ -3297,8 +3414,16 @@ void UpdatePlayGameOver(Player* player) {
 	}
 
 	if (player->showGameOver) {
-		DisplayObject(OBJECT_A6F14, 100, player->screenPos[0], 0u, 125u);
-		if (player->otherPlayer->refusingChallenges) {
+		if (player->shiraseTorikan) {
+			ShowText(player->screenPos[0] - TextWidth("EXCELLENT") / 2, 95, "EXCELLENT", 15u, false);
+			ShowText(player->screenPos[0] - TextWidth("but...") / 2, 125, "but...", 15u, false);
+			ShowText(player->screenPos[0] - TextWidth("let's go better") / 2, 140, "let's go better", 15u, false);
+			ShowText(player->screenPos[0] - TextWidth("next time") / 2, 155, "next time", 15u, false);
+		}
+		else {
+			DisplayObject(OBJECT_A6F14, 100, player->screenPos[0], 0u, 125u);
+		}
+		if (!player->shiraseTorikan && player->otherPlayer->refusingChallenges) {
 			ShowText(player->screenPos[0] - TextWidth("NO MORE") / 2, 65, "NO MORE", 15u, false);
 			ShowText(player->screenPos[0] - TextWidth("CHALLENGER") / 2, 77, "CHALLENGER", 15u, false);
 		}
@@ -3326,6 +3451,7 @@ void UpdatePlayGameOver(Player* player) {
 		player->numItemBarBlocks = 0u;
 
 		player->nowFlags = NOW_ABSENT | NOW_SHOWFIELD | NOW_SHOWNEXTBLOCK | NOW_GAMEOVER;
+		player->shiraseTorikan = false;
 
 		player->modeFlags &= MODE_SELECTIONS;
 		player->modeFlags &= ~MODE_DOUBLES;
@@ -3342,6 +3468,7 @@ void UpdatePlayGameOver(Player* player) {
 #undef numSecretGradeRows
 
 uint32_t PointsBaseValue(Player* player, uint8_t numLines) {
+	const uint16_t previousLevel = player->level;
 	uint8_t numLogicalLines;
 	if (player->modeFlags & MODE_BIG) {
 		numLogicalLines = numLines / 2;
@@ -3353,7 +3480,26 @@ uint32_t PointsBaseValue(Player* player, uint8_t numLines) {
 		numLogicalLines = numLines;
 	}
 
-	if (player->modeFlags & MODE_BIG) {
+	if (player->modeFlags & MODE_SHIRASE) {
+		if (numLogicalLines == 0u) {
+			player->combo = 1;
+		}
+		else {
+			if (numLogicalLines >= 2u) {
+				player->combo += (numLogicalLines - 1) * 2;
+			}
+			if (numLogicalLines >= 4u) {
+				player->level += 6u;
+			}
+			else if (numLogicalLines >= 3u) {
+				player->level += 4u;
+			}
+			else {
+				player->level += numLogicalLines;
+			}
+		}
+	}
+	else if (player->modeFlags & MODE_BIG) {
 		if (numLines >= 8u) {
 			player->combo += (numLogicalLines - 1) * 2;
 			player->level += 4u;
@@ -3394,8 +3540,10 @@ uint32_t PointsBaseValue(Player* player, uint8_t numLines) {
 		}
 	}
 
-	UpdateGrade(player, numLogicalLines);
-	UpdatePlayerGrade(player);
+	if (!(player->modeFlags & MODE_SHIRASE)) {
+		UpdateGrade(player, numLogicalLines);
+		UpdatePlayerGrade(player);
+	}
 
 	if (numLines != 0u) {
 		if (
@@ -3438,6 +3586,15 @@ uint32_t PointsBaseValue(Player* player, uint8_t numLines) {
 	}
 	else if ((player->modeFlags & MODE_DOUBLES) && player->level >= NextSectionLevels[2]) {
 		player->level = NextSectionLevels[2];
+	}
+	else if (player->modeFlags & MODE_SHIRASE) {
+		if (player->level > 1300u) {
+			player->level = 1300u;
+		}
+	}
+	CheckShiraseSectionEntry(player, previousLevel);
+	if (CheckShiraseTorikan(player, previousLevel)) {
+		return 0u;
 	}
 
 	pointsBaseValue += NumFastDropRows[player->num] + NumInstantDropRows[player->num] * 2;
@@ -3831,11 +3988,18 @@ void UpdatePlayStaffTransition(Player* player) {
 		ShowStaffClear(player, player->values[1]);
 		for (int16_t col = 1; col < player->matrixWidth - 1; col++) {
 			MATRIX(player, player->values[1], col).block = NULLBLOCK;
+			MATRIX(player, player->values[1], col).bone = false;
 		}
 		if (++player->values[1] == player->matrixHeight - 1) {
 			player->nowFlags |= NOW_STAFF;
 			ShowStaff(player);
-			player->modeFlags |= MODE_INVISIBLE;
+			if (player->modeFlags & MODE_SHIRASE) {
+				SetShiraseRollBlocksBig(player);
+				player->modeFlags &= ~MODE_INVISIBLE;
+			}
+			else {
+				player->modeFlags |= MODE_INVISIBLE;
+			}
 			NextPlayEntry(player, true);
 		}
 	}
