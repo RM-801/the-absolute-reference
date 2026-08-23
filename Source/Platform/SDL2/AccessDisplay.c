@@ -2,6 +2,7 @@
 #include "Platform/Util/AccessConfig.h"
 #include "Platform/Util/AccessData.h"
 #include "Video/Video.h"
+#include <stdio.h>
 
 SDL_Window* Window;
 SDL_Renderer* Renderer;

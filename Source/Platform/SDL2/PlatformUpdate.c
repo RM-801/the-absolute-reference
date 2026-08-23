@@ -6,6 +6,8 @@
 #include "Platform/Util/Render/Render.h"
 #include "Main/Frame.h"
 #include "Input/Button.h"
+#include <stdio.h>
+#include <string.h>
 
 Uint64 PlatformCurrentTime;
 Uint64 PlatformTimeAccumulator;

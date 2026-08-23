@@ -3,6 +3,7 @@
 #include "Platform/Util/AccessConfig.h"
 #include "Main/Frame.h"
 #include "HwSound.h"
+#include <stdio.h>
 #include <string.h>
 
 SDL_AudioDeviceID AudioDevice = 0;

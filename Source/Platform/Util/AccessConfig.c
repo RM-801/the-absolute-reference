@@ -7,7 +7,10 @@
 #include "Lib/Macros.h"
 #include "physfs.h"
 #include <assert.h>
+#include <ctype.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
 
 KeySetting InputConfigKeyboard[NUMINPUTS][8];
 KeySetting InputButton4Keyboard[NUMPLAYERS];
