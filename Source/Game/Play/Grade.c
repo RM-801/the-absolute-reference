@@ -195,6 +195,10 @@ void UpdateGrade(Player* player, uint8_t numLogicalLines) {
 }
 
 void CheckDecayGrade(Player* player) {
+	if (player->modeFlags & MODE_SHIRASE) {
+		return;
+	}
+
 	if (player->combo <= 1u) {
 		Grade* grade = &Grades[player->num];
 		GradeLevel level = grade->currentGrade.integer;
@@ -324,7 +328,7 @@ ModeFlag UpdateSectionGrade(Player* player) {
 }
 
 void CheckNextSection(Player* player) {
-	if (!(player->nowFlags & NOW_STAFF) && player->section < 10u) {
+	if (!(player->nowFlags & NOW_STAFF) && !(player->modeFlags & MODE_SHIRASE) && player->section < 10u) {
 		bool sectionUp = false;
 		const uint16_t* nextSectionLevel = &NextSectionLevels[player->section];
 		for (uint16_t section = player->section; section < 10u; section++, nextSectionLevel++) {
@@ -370,6 +374,29 @@ void CheckNextSection(Player* player) {
 						PlaySoundEffect(SOUNDEFFECT_SECTIONUP);
 					}
 				}
+			}
+		}
+	}
+	else if (!(player->nowFlags & NOW_STAFF) && (player->modeFlags & MODE_SHIRASE) && player->section < 13u) {
+		bool sectionUp = false;
+		while (player->section < 13u) {
+			const uint16_t nextSectionLevel = (uint16_t)((player->section + 1u) * 100u);
+			if (player->level < nextSectionLevel) {
+				break;
+			}
+
+			UpdateSectionGrade(player);
+
+			if (player->section < 12u) {
+				player->section++;
+				CurrentGameBg.UNK_10 |= player->num == PLAYER1 ? (PLAYER1 + 1) << 1 : (PLAYER2 + 1) << 1;
+				sectionUp = true;
+				if (sectionUp) {
+					PlaySoundEffect(SOUNDEFFECT_SECTIONUP);
+				}
+			}
+			else {
+				break;
 			}
 		}
 	}
