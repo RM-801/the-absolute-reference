@@ -90,7 +90,7 @@ void ShowStaff(Player* player) {
 	MemCopy(sizeof(StaffSections), staffSections, StaffSections);
 	MemCopy(sizeof(EndStaffRows), endStaffRows, EndStaffRows);
 
-	if ((player->modeFlags & MODE_DOUBLES) || ((player->modeFlags & (MODE_NORMAL | MODE_TGMPLUS | MODE_TADEATH)) && (GameFlags & GAME_TWIN))) {
+	if ((player->modeFlags & MODE_DOUBLES) || ((player->modeFlags & (MODE_NORMAL | MODE_TADEATH)) && (GameFlags & GAME_TWIN))) {
 		PlaySoundEffect(SOUNDEFFECT_GRANDMASTER);
 	}
 
@@ -193,7 +193,7 @@ static void UpdateEntityStaff(Entity* entity) {
 	}
 
 	ENTITY_INST_DATA_PTR(StaffData, data, entity);
-	if ((player->modeFlags & (MODE_NORMAL | MODE_TGMPLUS | MODE_TADEATH)) && (GameButtonsDown[player->num] & BUTTON_START)) {
+	if ((player->modeFlags & (MODE_NORMAL | MODE_TADEATH)) && (GameButtonsDown[player->num] & BUTTON_START)) {
 		data->scrollRate = SCROLLRATE_FAST;
 		data->scrollDivisor = 1u;
 	}
@@ -203,7 +203,7 @@ static void UpdateEntityStaff(Entity* entity) {
 	}
 	else {
 		int16_t divisor;
-		if (player->modeFlags & MODE_MASTER) {
+		if (player->modeFlags & (MODE_MASTER | MODE_SHIRASE)) {
 			data->scrollRate = SCROLLRATE_NORMAL;
 			divisor = 4;
 		}
@@ -311,8 +311,14 @@ static void UpdateEntityStaff(Entity* entity) {
 		}
 	}
 	else {
-		if (entity->scrollY < 2220) {
-			if (entity->scrollPixels <= 0) {
+		const uint16_t endScrollY = (player->modeFlags & MODE_SHIRASE) ? 3700u : 2220u;
+		if (entity->scrollY < endScrollY) {
+			if ((player->modeFlags & MODE_SHIRASE) && (player->nowFlags & NOW_STOPPED)) {
+				player->nowFlags &= ~NOW_NOUPDATE;
+				NextPlayGameOver(player);
+				FreeEntity(entity);
+			}
+			else if (entity->scrollPixels <= 0) {
 				data->skip = true;
 				if (player->modeFlags & MODE_TADEATH) {
 					if (player->level >= 999u) {
@@ -334,15 +340,31 @@ static void UpdateEntityStaff(Entity* entity) {
 			}
 		}
 		else {
-			player->nowFlags &= ~NOW_NOUPDATE;
-			if (!(player->nowFlags & NOW_STOPPED)) {
+			if (player->modeFlags & MODE_SHIRASE) {
+				data->skip = true;
 				player->miscFlags |= MISC_ORANGELINE;
+				player->nowFlags |= NOW_NOUPDATE;
+				player->grade = PLAYERGRADE_GM;
+				PlaySoundEffect(SOUNDEFFECT_LEVELUP);
+				ShowGrandMasterCongratulations(player);
 				LockActiveBlock(player, LOCKTYPE_GAMEOVER);
-				if (GameFlags & GAME_DOUBLES) {
-					LockActiveBlock(player->otherPlayer, LOCKTYPE_GAMEOVER);
+				for (int16_t row = 1; row < MATRIX_HEIGHT - 1; row++) {
+					for (int16_t col = 1; col < MATRIX_SINGLEWIDTH - 1; col++) {
+						MATRIX(player, row, col).block &= ~(BLOCK_FADING | BLOCK_INVISIBLE);
+					}
 				}
 			}
-			NextPlayGameOver(player);
+			else {
+				player->nowFlags &= ~NOW_NOUPDATE;
+				if (!(player->nowFlags & NOW_STOPPED)) {
+					player->miscFlags |= MISC_ORANGELINE;
+					LockActiveBlock(player, LOCKTYPE_GAMEOVER);
+					if (GameFlags & GAME_DOUBLES) {
+						LockActiveBlock(player->otherPlayer, LOCKTYPE_GAMEOVER);
+					}
+				}
+				NextPlayGameOver(player);
+			}
 			FreeEntity(entity);
 		}
 	}
@@ -380,7 +402,7 @@ static void UpdateEntityGrandMasterCongratulations(Entity* entity) {
 		player->nowFlags |= NOW_SHOWRANKINGCODE;
 	}
 	if (player->modeFlags & (MODE_20G | MODE_BIG | MODE_ITEM | MODE_TLS)) {
-		player->nowFlags &= NOW_SHOWRANKINGCODE;
+		player->nowFlags &= ~NOW_SHOWRANKINGCODE;
 	}
 
 	player->nowFlags |= NOW_NOUPDATE;
@@ -465,8 +487,6 @@ static void UpdateEntityShiraseComplete(Entity* entity) {
 	player->nowFlags |= NOW_NOUPDATE;
 
 	UpdateStaffFireworks(entity, player, 15u);
-
-	ShowText(player->screenPos[0] - TextWidth("EXCELLENT!") / 2, 120, "EXCELLENT!", 15u, false);
 }
 
 static void UpdateEntityDoublesComplete(Entity* entity) {
